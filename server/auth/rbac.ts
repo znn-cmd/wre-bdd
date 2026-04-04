@@ -1,5 +1,7 @@
 import type { LeadRow } from "@/types/models";
 import type { SessionUser } from "@/types/models";
+import type { UserRole } from "@/types/roles";
+import { normalizeUserRole } from "@/types/roles";
 import { parseSheetBool } from "@/lib/dates";
 import {
   type SheetReferenceBundle,
@@ -91,6 +93,22 @@ export type LeadAction =
   | "manage_users"
   | "system_settings_critical";
 
+/** Canonical role from session (handles hidden Unicode / aliases). */
+export function resolvedSessionRole(user: SessionUser): UserRole | null {
+  return normalizeUserRole(user.role);
+}
+
+/** Users sheet + catalog (admin only in product rules). */
+export function canManageDirectory(user: SessionUser): boolean {
+  return resolvedSessionRole(user) === "admin";
+}
+
+/** Settings page (presets). */
+export function canUseSettingsPage(user: SessionUser): boolean {
+  const r = resolvedSessionRole(user);
+  return r === "admin" || r === "rop" || r === "partner_dept_manager";
+}
+
 export function canPerform(
   user: SessionUser,
   action: LeadAction,
@@ -127,9 +145,9 @@ export function canPerform(
     case "view_audit":
       return true;
     case "manage_users":
-      return user.role === "admin";
+      return canManageDirectory(user);
     case "system_settings_critical":
-      return user.role === "admin";
+      return canManageDirectory(user);
     default:
       return false;
   }

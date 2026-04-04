@@ -1,6 +1,8 @@
+import { connection } from "next/server";
+import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/server/auth/get-session";
-import { canPerform } from "@/server/auth/rbac";
+import { canManageDirectory } from "@/server/auth/rbac";
 import { getUsersFresh } from "@/server/sheets/repository";
 import { UsersAdmin } from "@/components/users/users-admin";
 import type { UserListRow, UserRow } from "@/types/models";
@@ -24,9 +26,11 @@ function toUserListRow(u: UserRow): UserListRow {
 }
 
 export default async function UsersPage() {
+  noStore();
+  await connection();
   const user = await getSession();
   if (!user) redirect("/access/invalid");
-  if (!canPerform(user, "manage_users")) redirect("/app/dashboard");
+  if (!canManageDirectory(user)) redirect("/app/dashboard");
   const rows = await getUsersFresh();
   return <UsersAdmin initial={rows.map(toUserListRow)} />;
 }

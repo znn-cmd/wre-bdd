@@ -1,15 +1,18 @@
+import { connection } from "next/server";
+import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/server/auth/get-session";
+import { canUseSettingsPage } from "@/server/auth/rbac";
 import { SettingsForm } from "@/components/settings/settings-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function SettingsPage() {
+  noStore();
+  await connection();
   const user = await getSession();
   if (!user) redirect("/access/invalid");
-  const allowed =
-    user.role === "admin" ||
-    user.role === "rop" ||
-    user.role === "partner_dept_manager";
-  if (!allowed) redirect("/app/dashboard");
+  if (!canUseSettingsPage(user)) redirect("/app/dashboard");
   return (
     <div className="mx-auto max-w-lg space-y-3">
       <h1 className="text-lg font-semibold">Settings</h1>

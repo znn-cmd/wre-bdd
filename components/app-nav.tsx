@@ -1,13 +1,13 @@
 import Link from "next/link";
 import type { SessionUser } from "@/types/models";
-import { canPerform } from "@/server/auth/rbac";
+import {
+  canManageDirectory,
+  canUseSettingsPage,
+} from "@/server/auth/rbac";
 
 export function AppNav({ user }: { user: SessionUser }) {
-  const showUsers = canPerform(user, "manage_users");
-  const showSettings =
-    user.role === "admin" ||
-    user.role === "rop" ||
-    user.role === "partner_dept_manager";
+  const showUsers = canManageDirectory(user);
+  const showSettings = canUseSettingsPage(user);
 
   const link =
     "rounded-md px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:hover:text-neutral-100";
