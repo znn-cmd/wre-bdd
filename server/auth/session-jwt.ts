@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import type { UserRole } from "@/types/roles";
 import { getEnv } from "@/config/env";
+import { getSessionJwtSecretBytes } from "@/lib/session-jwt-secret";
 
 import { SESSION_COOKIE_NAME } from "@/config/constants";
 
@@ -17,8 +18,8 @@ export type SessionPayload = {
 };
 
 function secretKey() {
-  const secret = getEnv().SESSION_JWT_SECRET;
-  return new TextEncoder().encode(secret);
+  getEnv();
+  return getSessionJwtSecretBytes();
 }
 
 export async function signSession(payload: SessionPayload, maxAgeSec: number) {

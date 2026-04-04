@@ -5,7 +5,10 @@ import { z } from "zod";
 const envSchema = z.object({
   GOOGLE_SHEETS_SPREADSHEET_ID: z.string().min(1),
   GOOGLE_SERVICE_ACCOUNT_JSON: z.string().min(1),
-  SESSION_JWT_SECRET: z.string().min(32),
+  SESSION_JWT_SECRET: z.preprocess(
+    (v) => (typeof v === "string" ? v.trim() : v),
+    z.string().min(32),
+  ),
   APP_BASE_URL: z.string().url().optional(),
   TELEGRAM_DEFAULT_BOT_TOKEN: z.string().optional(),
   NODE_ENV: z.enum(["development", "production", "test"]).optional(),

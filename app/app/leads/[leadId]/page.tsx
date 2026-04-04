@@ -39,6 +39,7 @@ export default async function LeadDetailPage({
   return (
     <div className="mx-auto max-w-xl space-y-3">
       <Link
+        prefetch={false}
         href="/app/leads"
         className="text-xs text-blue-600 hover:underline dark:text-blue-400"
       >

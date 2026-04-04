@@ -17,27 +17,27 @@ export function AppNav({ user }: { user: SessionUser }) {
       <div className="mx-auto flex h-11 max-w-[1400px] items-center gap-3 px-3">
         <span className="text-sm font-semibold tracking-tight">Lead Hub</span>
         <nav className="flex flex-1 flex-wrap items-center gap-1">
-          <Link className={link} href="/app/dashboard">
+          <Link prefetch={false} className={link} href="/app/dashboard">
             Dashboard
           </Link>
-          <Link className={link} href="/app/leads">
+          <Link prefetch={false} className={link} href="/app/leads">
             Leads
           </Link>
-          <Link className={link} href="/app/audit">
+          <Link prefetch={false} className={link} href="/app/audit">
             Audit
           </Link>
           {showSettings ? (
-            <Link className={link} href="/app/settings">
+            <Link prefetch={false} className={link} href="/app/settings">
               Settings
             </Link>
           ) : null}
           {showUsers ? (
-            <Link className={link} href="/app/users">
+            <Link prefetch={false} className={link} href="/app/users">
               Users
             </Link>
           ) : null}
           {showUsers ? (
-            <Link className={link} href="/app/catalog">
+            <Link prefetch={false} className={link} href="/app/catalog">
               Catalog
             </Link>
           ) : null}
@@ -50,6 +50,7 @@ export function AppNav({ user }: { user: SessionUser }) {
             {user.role.replace(/_/g, " ")}
           </span>
           <Link
+            prefetch={false}
             className="text-blue-600 hover:underline dark:text-blue-400"
             href="/app/logout"
           >
