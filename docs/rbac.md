@@ -6,9 +6,9 @@ Roles are stored in the `Users.role` column (string). Supported values:
 |------|------|------------|----------------------|
 | Partner | `partner` | `partner_id` must match user’s `partner_id` | View/edit own leads: partner status, partner comment, partner manager name |
 | Our manager | `our_manager` | Lead `country_code` / `partner_id` must fall in the resolved scope from `Source_Managers` + catalog (see below); **not** filtered by `lead.source_manager_id` | Create leads (only allowed countries/partners), edit allowed fields; UI dropdowns are pre-filtered |
-| Partner dept manager | `partner_dept_manager` | All leads, narrowed by optional `allowed_country_codes` / `allowed_partner_ids` if set | Broad edit (not user admin) |
+| Partner dept manager | `partner_dept_manager` | All leads, narrowed by optional `allowed_country_codes` / `allowed_partner_ids` if set | Broad lead edit + **Users / Catalog** (directory); critical settings remain **admin-only** |
 | Admin | `admin` | All | Full data + **user management** + critical settings (sheet-backed) |
-| ROP / Head of sales | `rop` | All | Same operational power as admin on **leads/dashboards**; **no** `manage_users` in app actions |
+| ROP / Head of sales | `rop` | All | Same as admin on leads/dashboards + **Users / Catalog**; only **`admin`** has `system_settings_critical` |
 
 ## Server enforcement
 
@@ -39,9 +39,9 @@ On `Users` for **dept manager** / legacy paths:
 
 ## User administration
 
-Only `admin` can:
+`admin`, `rop`, and `partner_dept_manager` can:
 
 - Create/update users (`/app/users`)
 - Rotate access tokens (invalidates old link immediately because only the hash is stored)
 
-ROP cannot access `/app/users` (redirected to dashboard).
+Only `admin` has `system_settings_critical` (if used by future actions).

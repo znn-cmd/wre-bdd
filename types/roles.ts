@@ -18,8 +18,8 @@ const ROLE_ALIASES: Record<string, UserRole> = {
 
 /** Sheet / JWT may use different casing, spaces, zero-width chars, or aliases. */
 export function normalizeUserRole(raw: unknown): UserRole | null {
-  if (typeof raw !== "string") return null;
-  let n = raw.replace(/[\u200B-\u200D\uFEFF]/g, "").trim().toLowerCase();
+  const s = typeof raw === "string" ? raw : raw != null ? String(raw) : "";
+  let n = s.replace(/[\u200B-\u200D\uFEFF]/g, "").trim().toLowerCase();
   if (!n) return null;
   n = ROLE_ALIASES[n] ?? n;
   return isUserRole(n) ? n : null;

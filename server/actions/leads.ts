@@ -262,6 +262,11 @@ export async function adminCreateUserAction(raw: unknown) {
   };
   await appendUserRow(row);
   revalidateTag("users", "default");
+  try {
+    revalidatePath("/app/users", "page");
+  } catch {
+    /* Vercel: tag invalidation is enough if path revalidation store is missing */
+  }
   return { userId: id, accessToken: plain };
 }
 
@@ -286,7 +291,11 @@ export async function adminUpdateUserAction(userId: string, raw: unknown) {
   };
   await updateUserRow(userId, row);
   revalidateTag("users", "default");
-  revalidatePath("/app/users", "page");
+  try {
+    revalidatePath("/app/users", "page");
+  } catch {
+    /* see adminCreateUserAction */
+  }
   return { ok: true as const };
 }
 
@@ -305,7 +314,11 @@ export async function adminRotateUserTokenAction(userId: string) {
   };
   await updateUserRow(userId, row);
   revalidateTag("users", "default");
-  revalidatePath("/app/users", "page");
+  try {
+    revalidatePath("/app/users", "page");
+  } catch {
+    /* see adminCreateUserAction */
+  }
   return { accessToken: plain };
 }
 

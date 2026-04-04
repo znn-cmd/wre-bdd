@@ -95,12 +95,18 @@ export type LeadAction =
 
 /** Canonical role from session (handles hidden Unicode / aliases). */
 export function resolvedSessionRole(user: SessionUser): UserRole | null {
-  return normalizeUserRole(user.role);
+  return normalizeUserRole(String(user.role ?? ""));
 }
 
-/** Users sheet + catalog (admin only in product rules). */
+/**
+ * Users sheet + catalog: same privilege tier as broad lead ops (admin, ROP, dept manager).
+ * "admin" alone was too strict when the sheet role or JWT claim differs slightly.
+ */
 export function canManageDirectory(user: SessionUser): boolean {
-  return resolvedSessionRole(user) === "admin";
+  const r = resolvedSessionRole(user);
+  return (
+    r === "admin" || r === "rop" || r === "partner_dept_manager"
+  );
 }
 
 /** Settings page (presets). */
@@ -147,7 +153,7 @@ export function canPerform(
     case "manage_users":
       return canManageDirectory(user);
     case "system_settings_critical":
-      return canManageDirectory(user);
+      return resolvedSessionRole(user) === "admin";
     default:
       return false;
   }

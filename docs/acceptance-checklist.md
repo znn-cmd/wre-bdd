@@ -15,7 +15,7 @@ Use this to validate a deployment.
 - [ ] Partner sees only own `partner_id` leads.
 - [ ] Our manager sees only own `source_manager_id` leads (plus allow-lists if set).
 - [ ] Dept manager / admin / ROP see broader scope as documented.
-- [ ] ROP cannot open `/app/users`.
+- [ ] ROP can open `/app/users` and manage directory (same as catalog).
 - [ ] Admin can CRUD users and rotate tokens.
 
 ## Leads
