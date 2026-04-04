@@ -21,9 +21,19 @@ const ROLES = [
   "rop",
 ] as const;
 
+function pickUiRole(r: string): string {
+  return ROLES.includes(r as (typeof ROLES)[number]) ? r : "our_manager";
+}
+
 export function UsersAdmin({ initial }: { initial: UserListRow[] }) {
   const router = useRouter();
   const [tokenModal, setTokenModal] = React.useState<string | null>(null);
+
+  const refresh = React.useCallback(() => {
+    React.startTransition(() => {
+      router.refresh();
+    });
+  }, [router]);
 
   return (
     <div className="space-y-4">
@@ -31,7 +41,7 @@ export function UsersAdmin({ initial }: { initial: UserListRow[] }) {
       <CreateUser
         onDone={(t) => {
           setTokenModal(t);
-          router.refresh();
+          refresh();
         }}
       />
       <div className="overflow-x-auto rounded-md border border-neutral-200 dark:border-neutral-800">
@@ -51,7 +61,7 @@ export function UsersAdmin({ initial }: { initial: UserListRow[] }) {
               <UserRowEditor
                 key={u.user_id}
                 u={u}
-                onSaved={() => router.refresh()}
+                onSaved={refresh}
                 onToken={(t) => setTokenModal(t)}
               />
             ))}
@@ -171,7 +181,7 @@ function UserRowEditor({
   onToken: (t: string) => void;
 }) {
   const [full_name, setName] = React.useState(u.full_name);
-  const [role, setRole] = React.useState(u.role);
+  const [role, setRole] = React.useState(() => pickUiRole(String(u.role)));
   const [is_active, setActive] = React.useState(
     u.is_active === "true" || u.is_active === "1" || u.is_active === "TRUE"
       ? "true"
@@ -179,6 +189,26 @@ function UserRowEditor({
   );
   const [partner_id, setPid] = React.useState(u.partner_id);
   const [source_manager_id, setSm] = React.useState(u.source_manager_id);
+
+  React.useEffect(() => {
+    setName(u.full_name);
+    setRole(pickUiRole(String(u.role)));
+    setActive(
+      u.is_active === "true" || u.is_active === "1" || u.is_active === "TRUE"
+        ? "true"
+        : "false",
+    );
+    setPid(u.partner_id);
+    setSm(u.source_manager_id);
+  }, [
+    u.user_id,
+    u.updated_at,
+    u.full_name,
+    u.role,
+    u.is_active,
+    u.partner_id,
+    u.source_manager_id,
+  ]);
 
   const save = async () => {
     try {

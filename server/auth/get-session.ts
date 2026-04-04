@@ -1,11 +1,10 @@
-import { cache } from "react";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE_NAME } from "@/config/constants";
 import { verifySessionToken } from "./session-jwt";
 import type { SessionUser } from "@/types/models";
 import { normalizeUserRole } from "@/types/roles";
 
-export const getSession = cache(async (): Promise<SessionUser | null> => {
+export async function getSession(): Promise<SessionUser | null> {
   const jar = await cookies();
   const raw = jar.get(SESSION_COOKIE_NAME)?.value;
   if (!raw) return null;
@@ -22,7 +21,7 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
     allowedCountryCodes: v.allowedCountryCodes,
     allowedPartnerIds: v.allowedPartnerIds,
   };
-});
+}
 
 export async function requireSession(): Promise<SessionUser> {
   const s = await getSession();

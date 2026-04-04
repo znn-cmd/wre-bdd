@@ -1,4 +1,3 @@
-import { connection } from "next/server";
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/server/auth/get-session";
@@ -9,7 +8,6 @@ export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   noStore();
-  await connection();
   const user = await getSession();
   if (!user) redirect("/access/invalid");
   if (!canUseSettingsPage(user)) redirect("/app/dashboard");

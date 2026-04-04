@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { nowIso, parseSheetBool } from "@/lib/dates";
 import { leadCountryMatchesPartner } from "@/lib/partners";
@@ -286,6 +286,7 @@ export async function adminUpdateUserAction(userId: string, raw: unknown) {
   };
   await updateUserRow(userId, row);
   revalidateTag("users", "default");
+  revalidatePath("/app/users", "page");
   return { ok: true as const };
 }
 
@@ -304,6 +305,7 @@ export async function adminRotateUserTokenAction(userId: string) {
   };
   await updateUserRow(userId, row);
   revalidateTag("users", "default");
+  revalidatePath("/app/users", "page");
   return { accessToken: plain };
 }
 
