@@ -5,7 +5,7 @@ import { findUserByTokenHash } from "@/server/sheets/repository";
 import { signSession } from "@/server/auth/session-jwt";
 import { SESSION_COOKIE_NAME } from "@/config/constants";
 import { parseSheetBool } from "@/lib/dates";
-import { isUserRole } from "@/types/roles";
+import { normalizeUserRole } from "@/types/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -39,8 +39,8 @@ export async function GET(
         /* ignore parse errors */
       }
     }
-    const role = (user.role ?? "").trim();
-    if (!isUserRole(role)) {
+    const role = normalizeUserRole(user.role ?? "");
+    if (!role) {
       return NextResponse.redirect(new URL("/access/invalid", _req.url));
     }
 

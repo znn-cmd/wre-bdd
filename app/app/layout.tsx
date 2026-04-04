@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/server/auth/get-session";
 import { AppNav } from "@/components/app-nav";
 
+export const dynamic = "force-dynamic";
+
 export default async function AppSectionLayout({
   children,
 }: {

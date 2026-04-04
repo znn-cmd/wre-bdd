@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import type { UserRole } from "@/types/roles";
+import { type UserRole, normalizeUserRole } from "@/types/roles";
 import { getEnv } from "@/config/env";
 import { getSessionJwtSecretBytes } from "@/lib/session-jwt-secret";
 
@@ -42,7 +42,7 @@ export async function verifySessionToken(token: string) {
   const { payload } = await jwtVerify(token, secretKey());
   const sub = typeof payload.sub === "string" ? payload.sub : "";
   const name = typeof payload.name === "string" ? payload.name : "";
-  const role = payload.role as UserRole;
+  const role = normalizeUserRole(payload.role);
   const partnerId =
     typeof payload.partnerId === "string" ? payload.partnerId : "";
   const sourceManagerId =

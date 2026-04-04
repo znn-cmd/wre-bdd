@@ -8,13 +8,6 @@ export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
   if (pathname.startsWith("/app")) {
-    // RSC/segment prefetch often omits cookies; auth runs in Server Components.
-    // Without this, users get redirected to /access/invalid while navigating.
-    const prefetch = request.headers.get("next-router-prefetch");
-    if (prefetch === "1" || prefetch === "2") {
-      return NextResponse.next();
-    }
-
     const qToken = searchParams.get("token");
     if (qToken) {
       const url = request.nextUrl.clone();
