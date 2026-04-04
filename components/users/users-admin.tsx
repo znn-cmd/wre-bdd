@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { UserRow } from "@/types/models";
+import type { UserListRow } from "@/types/models";
 import {
   adminCreateUserAction,
   adminRotateUserTokenAction,
@@ -21,7 +21,7 @@ const ROLES = [
   "rop",
 ] as const;
 
-export function UsersAdmin({ initial }: { initial: UserRow[] }) {
+export function UsersAdmin({ initial }: { initial: UserListRow[] }) {
   const router = useRouter();
   const [tokenModal, setTokenModal] = React.useState<string | null>(null);
 
@@ -166,7 +166,7 @@ function UserRowEditor({
   onSaved,
   onToken,
 }: {
-  u: UserRow;
+  u: UserListRow;
   onSaved: () => void;
   onToken: (t: string) => void;
 }) {
@@ -202,7 +202,8 @@ function UserRowEditor({
     try {
       const res = await adminRotateUserTokenAction(u.user_id);
       onToken(res.accessToken);
-      onSaved();
+      // Defer refresh so the RSC round-trip does not race the Sheet write / revalidation.
+      setTimeout(() => onSaved(), 0);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     }

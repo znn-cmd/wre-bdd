@@ -68,6 +68,22 @@ export type UserRow = {
   updated_at: string;
 };
 
+/** Subset passed to the Users admin UI (avoids huge / sensitive fields breaking RSC serialization). */
+export type UserListRow = Pick<
+  UserRow,
+  | "user_id"
+  | "full_name"
+  | "role"
+  | "is_active"
+  | "partner_id"
+  | "source_manager_id"
+  | "allowed_country_codes"
+  | "allowed_partner_ids"
+  | "token_last_rotated_at"
+  | "created_at"
+  | "updated_at"
+>;
+
 export type PartnerRow = {
   partner_id: string;
   partner_name: string;

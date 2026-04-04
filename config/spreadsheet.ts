@@ -179,5 +179,9 @@ export function objectToRow(
   headers: readonly string[],
   obj: Record<string, string>,
 ): string[] {
-  return headers.map((h) => obj[h] ?? "");
+  return headers.map((h) => {
+    const v = obj[h];
+    if (v == null || v === "") return "";
+    return typeof v === "string" ? v : String(v);
+  });
 }
