@@ -19,7 +19,6 @@ import {
 } from "date-fns";
 import { useRouter } from "next/navigation";
 import { parseSheetBool } from "@/lib/dates";
-import { maskPhoneLastFourDigits } from "@/lib/phone-display";
 import {
   statusColorTextClass,
   statusRowForCode,
@@ -397,8 +396,8 @@ export function LeadsWorkspace({
         accessorKey: "client_phone",
         header: "Phone",
         cell: (c) => {
-          const raw = String(c.row.original.client_phone ?? "");
-          const display = maskPhoneLastFourDigits(raw);
+          /* `requireLeadsContext` already applies `redactLeadPhoneForPartner`. */
+          const display = String(c.row.original.client_phone ?? "");
           return (
             <span
               className="max-w-[120px] truncate font-mono text-[11px]"
@@ -806,7 +805,7 @@ function LeadEditDialog({
           ) : (
             <ReadOnlyField
               label="Phone"
-              value={maskPhoneLastFourDigits(draft.client_phone ?? "")}
+              value={draft.client_phone ?? ""}
               hint="Только просмотр"
             />
           )}
