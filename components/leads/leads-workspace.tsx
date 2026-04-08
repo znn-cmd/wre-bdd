@@ -41,6 +41,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { ChevronDown } from "lucide-react";
 
 type RefPack = {
   partners: {
@@ -203,6 +204,14 @@ function InlineStatusSelect({
     statusRowForCode(allStatuses, category, local)?.color ?? "",
   );
 
+  const displayLabel =
+    local.trim() === ""
+      ? "—"
+      : missing
+        ? `${statusLabelForCode(allStatuses, category, local)} (inactive)`
+        : options.find((o) => o.status_code === local)?.status_label ||
+          statusLabelForCode(allStatuses, category, local);
+
   const change = async (next: string) => {
     if (next === local) return;
     const prev = local;
@@ -220,28 +229,45 @@ function InlineStatusSelect({
   };
 
   return (
-    <select
-      disabled={pending}
-      className={cn(
-        "h-7 max-w-[180px] cursor-pointer truncate rounded-md border border-neutral-200 bg-white px-1.5 text-[11px] shadow-sm dark:border-neutral-800 dark:bg-neutral-950",
-        selectTone,
-      )}
-      value={local}
-      onChange={(e) => void change(e.target.value)}
+    <div
+      className="relative h-7 max-w-[180px]"
       title={statusLabelForCode(allStatuses, category, local)}
     >
-      <option value="">—</option>
-      {missing ? (
-        <option value={local}>
-          {statusLabelForCode(allStatuses, category, local)} (inactive)
-        </option>
-      ) : null}
-      {options.map((o) => (
-        <option key={o.status_code} value={o.status_code}>
-          {o.status_label}
-        </option>
-      ))}
-    </select>
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 flex items-center gap-0.5 rounded-md border border-neutral-200 bg-white px-1.5 text-[11px] shadow-sm dark:border-neutral-800 dark:bg-neutral-950",
+          selectTone ??
+            "font-normal text-neutral-800 dark:text-neutral-200",
+          pending && "opacity-50",
+        )}
+      >
+        <span className="min-w-0 flex-1 truncate">{displayLabel}</span>
+        <ChevronDown className="size-3 shrink-0 opacity-60" aria-hidden />
+      </div>
+      <select
+        disabled={pending}
+        className="absolute inset-0 z-10 h-full w-full max-w-[180px] cursor-pointer text-neutral-900 opacity-0 disabled:cursor-not-allowed dark:text-neutral-100"
+        value={local}
+        onChange={(e) => void change(e.target.value)}
+        aria-label={
+          field === "transfer_status"
+            ? "Transfer status"
+            : "Partner status"
+        }
+      >
+        <option value="">—</option>
+        {missing ? (
+          <option value={local}>
+            {statusLabelForCode(allStatuses, category, local)} (inactive)
+          </option>
+        ) : null}
+        {options.map((o) => (
+          <option key={o.status_code} value={o.status_code}>
+            {o.status_label}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 
@@ -1017,30 +1043,48 @@ function SelectField({
   const missing =
     value.trim() !== "" &&
     !options.some((o) => o.status_code === value);
+  const displayLabel =
+    value.trim() === ""
+      ? "—"
+      : missing
+        ? `${value} (not in catalog)`
+        : options.find((o) => o.status_code === value)?.status_label ||
+          value;
   return (
     <div className="grid gap-1">
       <Label>{label}</Label>
-      <select
-        disabled={disabled}
-        className={cn(
-          "h-8 rounded-md border border-neutral-200 bg-white px-2 text-sm dark:border-neutral-800 dark:bg-neutral-950",
-          toneClass,
-        )}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">—</option>
-        {missing ? (
-          <option value={value}>
-            {value} (not in catalog)
-          </option>
-        ) : null}
-        {options.map((o) => (
-          <option key={o.status_code} value={o.status_code}>
-            {o.status_label || o.status_code}
-          </option>
-        ))}
-      </select>
+      <div className="relative h-8 w-full">
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0 flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 text-sm dark:border-neutral-800 dark:bg-neutral-950",
+            toneClass ??
+              "font-normal text-neutral-800 dark:text-neutral-200",
+            disabled && "opacity-50",
+          )}
+        >
+          <span className="min-w-0 flex-1 truncate">{displayLabel}</span>
+          <ChevronDown className="size-4 shrink-0 opacity-60" aria-hidden />
+        </div>
+        <select
+          disabled={disabled}
+          className="absolute inset-0 z-10 h-full w-full cursor-pointer text-neutral-900 opacity-0 disabled:cursor-not-allowed dark:text-neutral-100"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-label={label}
+        >
+          <option value="">—</option>
+          {missing ? (
+            <option value={value}>
+              {value} (not in catalog)
+            </option>
+          ) : null}
+          {options.map((o) => (
+            <option key={o.status_code} value={o.status_code}>
+              {o.status_label || o.status_code}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }
