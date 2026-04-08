@@ -10,7 +10,7 @@ export default async function AppSectionLayout({
   children: React.ReactNode;
 }) {
   const user = await getSession();
-  if (!user) redirect("/access/invalid");
+  if (!user) redirect("/login");
   return (
     <div className="flex min-h-screen flex-col">
       <AppNav user={user} />

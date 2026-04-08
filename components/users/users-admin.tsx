@@ -49,6 +49,7 @@ export function UsersAdmin({ initial }: { initial: UserListRow[] }) {
           <thead className="bg-neutral-50 text-[10px] uppercase dark:bg-neutral-900">
             <tr>
               <th className="border-b px-2 py-2">Name</th>
+              <th className="border-b px-2 py-2">Login</th>
               <th className="border-b px-2 py-2">Role</th>
               <th className="border-b px-2 py-2">Active</th>
               <th className="border-b px-2 py-2">Partner</th>
@@ -110,6 +111,8 @@ function CreateUser({
   onDone: (token: string) => void;
 }) {
   const [full_name, setName] = React.useState("");
+  const [login, setLogin] = React.useState("");
+  const [password, setPassword] = React.useState("");
   const [role, setRole] = React.useState<string>("our_manager");
   const [partner_id, setPid] = React.useState("");
   const [source_manager_id, setSm] = React.useState("");
@@ -118,6 +121,8 @@ function CreateUser({
     try {
       const res = await adminCreateUserAction({
         full_name,
+        login,
+        password,
         role,
         is_active: "true",
         partner_id,
@@ -128,6 +133,8 @@ function CreateUser({
       toast.success("User created");
       onDone(res.accessToken);
       setName("");
+      setLogin("");
+      setPassword("");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     }
@@ -140,6 +147,25 @@ function CreateUser({
         <div className="grid gap-1">
           <Label>Full name</Label>
           <Input value={full_name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="grid gap-1">
+          <Label>Login (optional)</Label>
+          <Input
+            value={login}
+            onChange={(e) => setLogin(e.target.value)}
+            autoComplete="off"
+            placeholder="e.g. ivan — for password sign-in"
+          />
+        </div>
+        <div className="grid gap-1">
+          <Label>Password (optional)</Label>
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+            placeholder="Stored hashed; required if login set"
+          />
         </div>
         <div className="grid gap-1">
           <Label>Role</Label>
@@ -181,6 +207,8 @@ function UserRowEditor({
   onToken: (t: string) => void;
 }) {
   const [full_name, setName] = React.useState(u.full_name);
+  const [login, setLogin] = React.useState(u.login ?? "");
+  const [password_new, setPasswordNew] = React.useState("");
   const [role, setRole] = React.useState(() => pickUiRole(String(u.role)));
   const [is_active, setActive] = React.useState(
     u.is_active === "true" || u.is_active === "1" || u.is_active === "TRUE"
@@ -192,6 +220,8 @@ function UserRowEditor({
 
   React.useEffect(() => {
     setName(u.full_name);
+    setLogin(u.login ?? "");
+    setPasswordNew("");
     setRole(pickUiRole(String(u.role)));
     setActive(
       u.is_active === "true" || u.is_active === "1" || u.is_active === "TRUE"
@@ -204,6 +234,7 @@ function UserRowEditor({
     u.user_id,
     u.updated_at,
     u.full_name,
+    u.login,
     u.role,
     u.is_active,
     u.partner_id,
@@ -214,6 +245,8 @@ function UserRowEditor({
     try {
       await adminUpdateUserAction(u.user_id, {
         full_name,
+        login,
+        password_new,
         role,
         is_active: is_active === "true" || is_active === "1" ? "true" : "false",
         partner_id,
@@ -247,6 +280,25 @@ function UserRowEditor({
           value={full_name}
           onChange={(e) => setName(e.target.value)}
         />
+      </td>
+      <td className="px-2 py-1">
+        <div className="grid gap-1">
+          <Input
+            className="h-7 text-xs"
+            value={login}
+            onChange={(e) => setLogin(e.target.value)}
+            placeholder="login"
+            autoComplete="off"
+          />
+          <Input
+            className="h-7 text-xs"
+            type="password"
+            value={password_new}
+            onChange={(e) => setPasswordNew(e.target.value)}
+            placeholder="New password (optional)"
+            autoComplete="new-password"
+          />
+        </div>
       </td>
       <td className="px-2 py-1">
         <select

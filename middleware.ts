@@ -18,13 +18,13 @@ export async function middleware(request: NextRequest) {
 
     const raw = request.cookies.get(SESSION_COOKIE_NAME)?.value;
     if (!raw) {
-      return NextResponse.redirect(new URL("/access/invalid", request.url));
+      return NextResponse.redirect(new URL("/login", request.url));
     }
     try {
       await jwtVerify(raw, getSessionJwtSecretBytes());
       return NextResponse.next();
     } catch {
-      const res = NextResponse.redirect(new URL("/access/invalid", request.url));
+      const res = NextResponse.redirect(new URL("/login", request.url));
       res.cookies.delete(SESSION_COOKIE_NAME);
       return res;
     }

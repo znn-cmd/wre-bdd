@@ -21,7 +21,7 @@ export default async function LeadDetailPage({
 }) {
   const { leadId } = await params;
   const user = await getSession();
-  if (!user) redirect("/access/invalid");
+  if (!user) redirect("/login");
   const [lead, ref] = await Promise.all([
     getLeadById(decodeURIComponent(leadId)),
     batchLoadReference(),

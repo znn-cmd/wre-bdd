@@ -70,6 +70,8 @@ export const HEADERS = {
   Users: [
     "user_id",
     "full_name",
+    "login",
+    "password",
     "role",
     "is_active",
     "token_hash",

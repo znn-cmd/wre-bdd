@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function CatalogPage() {
   noStore();
   const user = await getSession();
-  if (!user) redirect("/access/invalid");
+  if (!user) redirect("/login");
   if (!canManageDirectory(user)) redirect("/app/dashboard");
   const ref = await batchLoadReference();
   return (

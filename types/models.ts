@@ -53,6 +53,10 @@ export type LeadRow = {
 export type UserRow = {
   user_id: string;
   full_name: string;
+  /** Lowercase login for password sign-in; empty = password login disabled. */
+  login: string;
+  /** Bcrypt or legacy plaintext; empty = password login disabled. */
+  password: string;
   role: UserRole | string;
   is_active: string;
   token_hash: string;
@@ -73,6 +77,7 @@ export type UserListRow = Pick<
   UserRow,
   | "user_id"
   | "full_name"
+  | "login"
   | "role"
   | "is_active"
   | "partner_id"

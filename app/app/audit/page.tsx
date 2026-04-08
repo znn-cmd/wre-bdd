@@ -25,7 +25,7 @@ function auditChangeDisplay(
 
 export default async function AuditPage() {
   const user = await getSession();
-  if (!user) redirect("/access/invalid");
+  if (!user) redirect("/login");
   const { leads } = await requireLeadsContext();
   const maskPhone = shouldMaskClientPhoneForRole(user.role);
   const visibleIds = new Set(leads.map((l) => l.lead_id));

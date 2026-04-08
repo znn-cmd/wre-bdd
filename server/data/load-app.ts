@@ -10,7 +10,7 @@ import { batchLoadReference, getLeadsFresh } from "@/server/sheets/repository";
 
 export async function requireLeadsContext() {
   const user = await getSession();
-  if (!user) redirect("/access/invalid");
+  if (!user) redirect("/login");
   const [leads, ref] = await Promise.all([getLeadsFresh(), batchLoadReference()]);
   const visible = filterLeadsForUser(user, leads, ref);
   const leadsForUi = shouldMaskClientPhoneForRole(user.role)

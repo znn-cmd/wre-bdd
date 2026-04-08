@@ -5,6 +5,7 @@ import { z } from "zod";
 import { nowIso, parseSheetBool } from "@/lib/dates";
 import { leadCountryMatchesPartner } from "@/lib/partners";
 import { createLeadSchema, patchLeadSchema } from "@/lib/schemas/lead";
+import { hashPasswordForSheet, normalizeLogin } from "@/lib/password";
 import { generateAccessToken, hashAccessToken } from "@/lib/token";
 import { randomBytes } from "crypto";
 import { requireSession } from "@/server/auth/get-session";
@@ -21,6 +22,7 @@ import {
   appendUserRow,
   batchLoadReference,
   findUserById,
+  findUserByLogin,
   getLeadById,
   getLeadsFresh,
   getUsersFresh,
@@ -235,17 +237,41 @@ const userUpsertSchema = z.object({
   allowed_partner_ids: z.string().max(500).optional().default(""),
 });
 
+const userCreateSchema = userUpsertSchema.extend({
+  login: z.string().max(80).optional().default(""),
+  password: z.string().max(500).optional().default(""),
+});
+
+const userUpdateSchema = userUpsertSchema.extend({
+  login: z.string().max(80).optional().default(""),
+  password_new: z.string().max(500).optional().default(""),
+});
+
 export async function adminCreateUserAction(raw: unknown) {
   const user = await requireSession();
   if (!canPerform(user, "manage_users")) throw new Error("Forbidden");
-  const input = userUpsertSchema.parse(raw);
+  const input = userCreateSchema.parse(raw);
   if (!isUserRole(input.role)) throw new Error("Invalid role");
+  const loginN = normalizeLogin(input.login);
+  const plainPw = input.password.trim();
+  if (plainPw && !loginN) {
+    throw new Error("Login is required when setting a password");
+  }
+  if (loginN) {
+    const taken = await findUserByLogin(loginN);
+    if (taken) throw new Error("This login is already in use");
+  }
+  const passwordHash = plainPw
+    ? await hashPasswordForSheet(plainPw)
+    : "";
   const plain = generateAccessToken(32);
   const ts = nowIso();
   const id = `U-${Date.now()}-${randomBytes(2).toString("hex")}`;
   const row: UserRow = {
     user_id: id,
     full_name: input.full_name,
+    login: loginN,
+    password: passwordHash,
     role: input.role,
     is_active: input.is_active,
     token_hash: hashAccessToken(plain),
@@ -273,14 +299,32 @@ export async function adminCreateUserAction(raw: unknown) {
 export async function adminUpdateUserAction(userId: string, raw: unknown) {
   const user = await requireSession();
   if (!canPerform(user, "manage_users")) throw new Error("Forbidden");
-  const input = userUpsertSchema.parse(raw);
+  const input = userUpdateSchema.parse(raw);
   if (!isUserRole(input.role)) throw new Error("Invalid role");
   const existing = await findUserById(userId);
   if (!existing) throw new Error("Not found");
+  const loginN = normalizeLogin(input.login);
+  const newPlain = input.password_new.trim();
+  const hadLogin = Boolean(normalizeLogin(existing.login ?? ""));
+  if (newPlain && !loginN && !hadLogin) {
+    throw new Error("Set a login before setting a password");
+  }
+  if (loginN) {
+    const taken = await findUserByLogin(loginN);
+    if (taken && taken.user_id !== userId) {
+      throw new Error("This login is already in use");
+    }
+  }
+  let password = existing.password ?? "";
+  if (newPlain) {
+    password = await hashPasswordForSheet(newPlain);
+  }
   const ts = nowIso();
   const row: UserRow = {
     ...existing,
     full_name: input.full_name,
+    login: loginN,
+    password,
     role: input.role,
     is_active: input.is_active,
     partner_id: input.partner_id,

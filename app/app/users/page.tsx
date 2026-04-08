@@ -15,6 +15,7 @@ function toUserListRow(u: UserRow): UserListRow {
   return {
     user_id: safeStringForRsc(u.user_id, 128),
     full_name: safeStringForRsc(u.full_name, 220),
+    login: safeStringForRsc(u.login ?? "", 80),
     role,
     is_active: safeStringForRsc(u.is_active, 32),
     partner_id: safeStringForRsc(u.partner_id, 128),
@@ -30,7 +31,7 @@ function toUserListRow(u: UserRow): UserListRow {
 export default async function UsersPage() {
   noStore();
   const user = await getSession();
-  if (!user) redirect("/access/invalid");
+  if (!user) redirect("/login");
   if (!canManageDirectory(user)) redirect("/app/dashboard");
   const rows = await getUsersFresh();
   return <UsersAdmin initial={rows.map(toUserListRow)} />;

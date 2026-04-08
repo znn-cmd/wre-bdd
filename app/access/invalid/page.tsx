@@ -29,12 +29,20 @@ export default async function AccessInvalidPage({ searchParams }: Props) {
           will not work.
         </p>
       ) : null}
-      <Link
-        href="/"
-        className="text-sm font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400"
-      >
-        Home
-      </Link>
+      <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
+        <Link
+          href="/login"
+          className="font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400"
+        >
+          Sign in
+        </Link>
+        <Link
+          href="/"
+          className="font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400"
+        >
+          Home
+        </Link>
+      </div>
     </div>
   );
 }

@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAfter, isValid, parseISO } from "date-fns";
 import { hashAccessToken } from "@/lib/token";
 import { findUserByTokenHash } from "@/server/sheets/repository";
-import { signSession } from "@/server/auth/session-jwt";
+import { signSessionJwtForUserRow } from "@/server/auth/session-from-user";
 import { SESSION_COOKIE_NAME } from "@/config/constants";
 import { parseSheetBool } from "@/lib/dates";
-import { normalizeUserRole } from "@/types/roles";
-
 export const dynamic = "force-dynamic";
 
 export async function GET(
@@ -39,23 +37,12 @@ export async function GET(
         /* ignore parse errors */
       }
     }
-    const role = normalizeUserRole(user.role ?? "");
-    if (!role) {
+    let jwt: string;
+    try {
+      jwt = await signSessionJwtForUserRow(user);
+    } catch {
       return NextResponse.redirect(new URL("/access/invalid", _req.url));
     }
-
-    const jwt = await signSession(
-      {
-        sub: user.user_id,
-        name: user.full_name,
-        role,
-        partnerId: user.partner_id ?? "",
-        sourceManagerId: user.source_manager_id ?? "",
-        countries: user.allowed_country_codes ?? "",
-        partners: user.allowed_partner_ids ?? "",
-      },
-      60 * 60 * 24 * 7,
-    );
 
     const res = NextResponse.redirect(new URL("/app/dashboard", _req.url));
     res.cookies.set(SESSION_COOKIE_NAME, jwt, {

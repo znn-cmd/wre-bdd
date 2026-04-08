@@ -27,6 +27,7 @@ import {
 } from "./client";
 import { randomBytes } from "crypto";
 import { nowIso, parseSheetBool } from "@/lib/dates";
+import { normalizeLogin } from "@/lib/password";
 import { columnEndLetterFromCount } from "@/lib/sheet-range";
 
 const LEADS_HEADERS = HEADERS.Leads;
@@ -122,6 +123,15 @@ export async function findUserByTokenHash(
 export async function findUserById(userId: string): Promise<UserRow | null> {
   const users = await loadUsersRaw();
   return users.find((u) => u.user_id === userId) ?? null;
+}
+
+export async function findUserByLogin(login: string): Promise<UserRow | null> {
+  const want = normalizeLogin(login);
+  if (!want) return null;
+  const users = await loadUsersRaw();
+  return (
+    users.find((u) => normalizeLogin(u.login ?? "") === want) ?? null
+  );
 }
 
 export async function appendUserRow(row: UserRow): Promise<void> {

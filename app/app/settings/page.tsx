@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function SettingsPage() {
   noStore();
   const user = await getSession();
-  if (!user) redirect("/access/invalid");
+  if (!user) redirect("/login");
   if (!canUseSettingsPage(user)) redirect("/app/dashboard");
   return (
     <div className="mx-auto max-w-lg space-y-3">
