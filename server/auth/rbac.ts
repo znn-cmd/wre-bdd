@@ -196,7 +196,6 @@ const OUR_MANAGER_FIELDS: (keyof LeadRow)[] = [
   "country_code",
   "partner_id",
   "client_name",
-  "client_phone",
   "client_email",
   "client_language",
   "service_type",

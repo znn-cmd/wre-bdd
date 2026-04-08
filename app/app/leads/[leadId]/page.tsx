@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { maskPhoneLastFourDigits } from "@/lib/phone-display";
+import {
+  maskPhoneLastFourDigits,
+  shouldMaskClientPhoneForRole,
+} from "@/lib/phone-display";
 import {
   statusColorTextClass,
   statusLabelForCode,
@@ -25,10 +28,9 @@ export default async function LeadDetailPage({
   ]);
   if (!lead || !userCanSeeLead(user, lead, ref)) redirect("/app/leads");
 
-  const phoneDisplay =
-    user.role === "partner"
-      ? maskPhoneLastFourDigits(lead.client_phone)
-      : lead.client_phone;
+  const phoneDisplay = shouldMaskClientPhoneForRole(user.role)
+    ? maskPhoneLastFourDigits(lead.client_phone)
+    : lead.client_phone;
 
   const statuses = ref.statuses;
 

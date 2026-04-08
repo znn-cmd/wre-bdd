@@ -1,4 +1,7 @@
-import { maskPhoneLastFourDigits } from "@/lib/phone-display";
+import {
+  maskPhoneLastFourDigits,
+  shouldMaskClientPhoneForRole,
+} from "@/lib/phone-display";
 import { requireLeadsContext } from "@/server/data/load-app";
 import { getSession } from "@/server/auth/get-session";
 import { redirect } from "next/navigation";
@@ -24,7 +27,7 @@ export default async function AuditPage() {
   const user = await getSession();
   if (!user) redirect("/access/invalid");
   const { leads } = await requireLeadsContext();
-  const maskPhone = user.role === "partner";
+  const maskPhone = shouldMaskClientPhoneForRole(user.role);
   const visibleIds = new Set(leads.map((l) => l.lead_id));
   const logs = await loadAuditLogPage({ maxRows: 1500 });
   const filtered = logs.filter(

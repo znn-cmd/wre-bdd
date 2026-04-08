@@ -1,5 +1,10 @@
+/** Roles that must not receive full `client_phone` in leads UI / audit (masked like partner). */
+export function shouldMaskClientPhoneForRole(role: string): boolean {
+  return role === "partner" || role === "our_manager";
+}
+
 /**
- * Partner-facing phone: hide digits except the last 4 of the digit run.
+ * Hide digits except the last 4 of the digit run.
  * Non-digit characters are ignored for counting; if there are no digits,
  * falls back to masking all but the last 4 characters of the raw string.
  */
@@ -16,6 +21,7 @@ export function maskPhoneLastFourDigits(phone: string): string {
   return "*".repeat(nStars) + last4;
 }
 
+/** Apply {@link maskPhoneLastFourDigits} to `client_phone` (partner / our_manager lists). */
 export function redactLeadPhoneForPartner<T extends { client_phone: string }>(
   lead: T,
 ): T {

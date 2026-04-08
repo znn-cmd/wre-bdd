@@ -19,6 +19,7 @@ import {
 } from "date-fns";
 import { useRouter } from "next/navigation";
 import { parseSheetBool } from "@/lib/dates";
+import { shouldMaskClientPhoneForRole } from "@/lib/phone-display";
 import {
   statusColorTextClass,
   statusRowForCode,
@@ -394,13 +395,12 @@ export function LeadsWorkspace({
         if (d && isAfter(d, endOfDay(parseISO(ui.dateTo)))) return false;
       }
       if (!q) return true;
-      const phoneHay =
-        user.role === "partner"
-          ? (() => {
-              const d = String(l.client_phone ?? "").replace(/\D/g, "");
-              return d.length >= 4 ? d.slice(-4) : d;
-            })()
-          : l.client_phone;
+      const phoneHay = shouldMaskClientPhoneForRole(user.role)
+        ? (() => {
+            const d = String(l.client_phone ?? "").replace(/\D/g, "");
+            return d.length >= 4 ? d.slice(-4) : d;
+          })()
+        : l.client_phone;
       const hay = [
         l.lead_id,
         l.client_name,
@@ -469,7 +469,7 @@ export function LeadsWorkspace({
         accessorKey: "client_phone",
         header: "Phone",
         cell: (c) => {
-          /* `requireLeadsContext` already applies `redactLeadPhoneForPartner`. */
+          /* `requireLeadsContext` masks phone for partner / our_manager. */
           const display = String(c.row.original.client_phone ?? "");
           return (
             <span
@@ -838,6 +838,7 @@ function LeadEditDialog({
   };
 
   const isPartner = user.role === "partner";
+  const hideFullPhone = shouldMaskClientPhoneForRole(user.role);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -854,11 +855,19 @@ function LeadEditDialog({
                 value={draft.client_name ?? ""}
                 onChange={(v) => setDraft((d) => ({ ...d, client_name: v }))}
               />
-              <Field
-                label="Phone"
-                value={draft.client_phone ?? ""}
-                onChange={(v) => setDraft((d) => ({ ...d, client_phone: v }))}
-              />
+              {hideFullPhone ? (
+                <ReadOnlyField
+                  label="Phone"
+                  value={draft.client_phone ?? ""}
+                  hint="Только просмотр"
+                />
+              ) : (
+                <Field
+                  label="Phone"
+                  value={draft.client_phone ?? ""}
+                  onChange={(v) => setDraft((d) => ({ ...d, client_phone: v }))}
+                />
+              )}
               <Field
                 label="Email"
                 value={draft.client_email ?? ""}
