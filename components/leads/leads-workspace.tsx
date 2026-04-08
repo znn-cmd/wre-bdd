@@ -22,6 +22,7 @@ import { parseSheetBool } from "@/lib/dates";
 import {
   statusColorTextClass,
   statusRowForCode,
+  type StatusCategory,
 } from "@/lib/status-labels";
 import { cn } from "@/lib/utils";
 import type { LeadRow, SessionUser, StatusRow } from "@/types/models";
@@ -41,7 +42,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { ChevronDown } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+/** Radix Select requires a non-empty string `value` for the empty option. */
+const STATUS_SELECT_EMPTY = "__status_empty__";
 
 type RefPack = {
   partners: {
@@ -92,6 +102,22 @@ function statusLabelForCode(
   );
   const label = (row?.status_label ?? "").trim();
   return label || c;
+}
+
+function statusOptionTextClass(
+  statuses: StatusRow[],
+  category: StatusCategory,
+  code: string,
+): string {
+  const c = (code ?? "").trim();
+  if (!c) {
+    return "font-normal text-neutral-800 dark:text-neutral-200";
+  }
+  return (
+    statusColorTextClass(
+      statusRowForCode(statuses, category, c)?.color ?? "",
+    ) ?? "font-normal text-neutral-800 dark:text-neutral-200"
+  );
 }
 
 /** Mirrors `editableLeadFields` in server/auth/rbac for table inline edits. */
@@ -200,25 +226,22 @@ function InlineStatusSelect({
     local.trim() !== "" &&
     !options.some((o) => o.status_code === local);
 
-  const selectTone = statusColorTextClass(
-    statusRowForCode(allStatuses, category, local)?.color ?? "",
-  );
+  const selectValue =
+    local.trim() === "" ? STATUS_SELECT_EMPTY : local;
 
-  const displayLabel =
-    local.trim() === ""
-      ? "—"
-      : missing
-        ? `${statusLabelForCode(allStatuses, category, local)} (inactive)`
-        : options.find((o) => o.status_code === local)?.status_label ||
-          statusLabelForCode(allStatuses, category, local);
+  const triggerTone =
+    statusColorTextClass(
+      statusRowForCode(allStatuses, category, local)?.color ?? "",
+    ) ?? "font-normal text-neutral-800 dark:text-neutral-200";
 
   const change = async (next: string) => {
-    if (next === local) return;
+    const real = next === STATUS_SELECT_EMPTY ? "" : next;
+    if (real === local) return;
     const prev = local;
-    setLocal(next);
+    setLocal(real);
     setPending(true);
     try {
-      await updateLeadAction(leadId, { [field]: next });
+      await updateLeadAction(leadId, { [field]: real });
       onSaved();
     } catch (e) {
       setLocal(prev);
@@ -230,43 +253,67 @@ function InlineStatusSelect({
 
   return (
     <div
-      className="relative h-7 max-w-[180px]"
+      className="max-w-[180px]"
       title={statusLabelForCode(allStatuses, category, local)}
     >
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-0 flex items-center gap-0.5 rounded-md border border-neutral-200 bg-white px-1.5 text-[11px] shadow-sm dark:border-neutral-800 dark:bg-neutral-950",
-          selectTone ??
-            "font-normal text-neutral-800 dark:text-neutral-200",
-          pending && "opacity-50",
-        )}
-      >
-        <span className="min-w-0 flex-1 truncate">{displayLabel}</span>
-        <ChevronDown className="size-3 shrink-0 opacity-60" aria-hidden />
-      </div>
-      <select
+      <Select
+        value={selectValue}
+        onValueChange={(v) => void change(v)}
         disabled={pending}
-        className="absolute inset-0 z-10 h-full w-full max-w-[180px] cursor-pointer text-neutral-900 opacity-0 disabled:cursor-not-allowed dark:text-neutral-100"
-        value={local}
-        onChange={(e) => void change(e.target.value)}
-        aria-label={
-          field === "transfer_status"
-            ? "Transfer status"
-            : "Partner status"
-        }
       >
-        <option value="">—</option>
-        {missing ? (
-          <option value={local}>
-            {statusLabelForCode(allStatuses, category, local)} (inactive)
-          </option>
-        ) : null}
-        {options.map((o) => (
-          <option key={o.status_code} value={o.status_code}>
-            {o.status_label}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger
+          className={cn(
+            "h-7 max-w-[180px] text-[11px]",
+            pending && "opacity-50",
+            triggerTone,
+          )}
+          aria-label={
+            field === "transfer_status"
+              ? "Transfer status"
+              : "Partner status"
+          }
+        >
+          <SelectValue placeholder="—" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem
+            value={STATUS_SELECT_EMPTY}
+            className={cn(
+              "text-[11px]",
+              statusOptionTextClass(allStatuses, category, ""),
+            )}
+          >
+            —
+          </SelectItem>
+          {missing ? (
+            <SelectItem
+              value={local}
+              className={cn(
+                "text-[11px]",
+                statusOptionTextClass(allStatuses, category, local),
+              )}
+            >
+              {statusLabelForCode(allStatuses, category, local)} (inactive)
+            </SelectItem>
+          ) : null}
+          {options.map((o) => (
+            <SelectItem
+              key={o.status_code}
+              value={o.status_code}
+              className={cn(
+                "text-[11px]",
+                statusOptionTextClass(
+                  allStatuses,
+                  category,
+                  o.status_code,
+                ),
+              )}
+            >
+              {o.status_label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -841,26 +888,16 @@ function LeadEditDialog({
             onChange={(v) => setDraft((d) => ({ ...d, transfer_status: v }))}
             options={statusesForSelect(reference.statuses, "transfer_status")}
             disabled={isPartner}
-            toneClass={statusColorTextClass(
-              statusRowForCode(
-                reference.statuses,
-                "transfer_status",
-                draft.transfer_status ?? "",
-              )?.color ?? "",
-            )}
+            allStatuses={reference.statuses}
+            category="transfer_status"
           />
           <SelectField
             label="Partner status"
             value={draft.partner_status ?? ""}
             onChange={(v) => setDraft((d) => ({ ...d, partner_status: v }))}
             options={statusesForSelect(reference.statuses, "partner_status")}
-            toneClass={statusColorTextClass(
-              statusRowForCode(
-                reference.statuses,
-                "partner_status",
-                draft.partner_status ?? "",
-              )?.color ?? "",
-            )}
+            allStatuses={reference.statuses}
+            category="partner_status"
           />
           <SelectField
             label="Final outcome"
@@ -868,13 +905,8 @@ function LeadEditDialog({
             onChange={(v) => setDraft((d) => ({ ...d, final_outcome: v }))}
             options={statusesForSelect(reference.statuses, "final_outcome")}
             disabled={isPartner}
-            toneClass={statusColorTextClass(
-              statusRowForCode(
-                reference.statuses,
-                "final_outcome",
-                draft.final_outcome ?? "",
-              )?.color ?? "",
-            )}
+            allStatuses={reference.statuses}
+            category="final_outcome"
           />
           {isPartner ? (
             <Field
@@ -1031,60 +1063,78 @@ function SelectField({
   onChange,
   options,
   disabled,
-  toneClass,
+  allStatuses,
+  category,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: { status_code: string; status_label: string }[];
   disabled?: boolean;
-  toneClass?: string;
+  allStatuses: StatusRow[];
+  category: StatusCategory;
 }) {
   const missing =
     value.trim() !== "" &&
     !options.some((o) => o.status_code === value);
-  const displayLabel =
-    value.trim() === ""
-      ? "—"
-      : missing
-        ? `${value} (not in catalog)`
-        : options.find((o) => o.status_code === value)?.status_label ||
-          value;
+  const selectValue =
+    value.trim() === "" ? STATUS_SELECT_EMPTY : value;
+
+  const triggerTone =
+    statusColorTextClass(
+      statusRowForCode(allStatuses, category, value)?.color ?? "",
+    ) ?? "font-normal text-neutral-800 dark:text-neutral-200";
+
   return (
     <div className="grid gap-1">
       <Label>{label}</Label>
-      <div className="relative h-8 w-full">
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 text-sm dark:border-neutral-800 dark:bg-neutral-950",
-            toneClass ??
-              "font-normal text-neutral-800 dark:text-neutral-200",
-            disabled && "opacity-50",
-          )}
-        >
-          <span className="min-w-0 flex-1 truncate">{displayLabel}</span>
-          <ChevronDown className="size-4 shrink-0 opacity-60" aria-hidden />
-        </div>
-        <select
-          disabled={disabled}
-          className="absolute inset-0 z-10 h-full w-full cursor-pointer text-neutral-900 opacity-0 disabled:cursor-not-allowed dark:text-neutral-100"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+      <Select
+        value={selectValue}
+        onValueChange={(v) =>
+          onChange(v === STATUS_SELECT_EMPTY ? "" : v)
+        }
+        disabled={disabled}
+      >
+        <SelectTrigger
+          className={cn("h-8 w-full", disabled && "opacity-50", triggerTone)}
           aria-label={label}
         >
-          <option value="">—</option>
+          <SelectValue placeholder="—" className="min-w-0 truncate" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem
+            value={STATUS_SELECT_EMPTY}
+            className={statusOptionTextClass(allStatuses, category, "")}
+          >
+            —
+          </SelectItem>
           {missing ? (
-            <option value={value}>
+            <SelectItem
+              value={value}
+              className={statusOptionTextClass(
+                allStatuses,
+                category,
+                value,
+              )}
+            >
               {value} (not in catalog)
-            </option>
+            </SelectItem>
           ) : null}
           {options.map((o) => (
-            <option key={o.status_code} value={o.status_code}>
+            <SelectItem
+              key={o.status_code}
+              value={o.status_code}
+              className={statusOptionTextClass(
+                allStatuses,
+                category,
+                o.status_code,
+              )}
+            >
               {o.status_label || o.status_code}
-            </option>
+            </SelectItem>
           ))}
-        </select>
-      </div>
+        </SelectContent>
+      </Select>
     </div>
   );
 }
