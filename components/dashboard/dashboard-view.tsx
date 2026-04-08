@@ -13,7 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import { format, startOfMonth } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import type { LeadRow, SessionUser, StatusRow } from "@/types/models";
 import type { PartnerCountryTableRow } from "@/lib/dashboard-stats";
 import {
@@ -54,13 +54,13 @@ function useManagementDashboard(role: SessionUser["role"]): boolean {
 }
 
 const PRESET_OPTIONS: { id: DashboardDatePreset; label: string }[] = [
-  { id: "all", label: "Все время" },
-  { id: "this_week", label: "Текущая неделя" },
-  { id: "last_week", label: "Прошлая неделя" },
-  { id: "this_month", label: "Этот месяц" },
-  { id: "last_month", label: "Прошлый месяц" },
-  { id: "this_year", label: "Этот год" },
-  { id: "custom", label: "Свой период" },
+  { id: "all", label: "All time" },
+  { id: "this_week", label: "This week" },
+  { id: "last_week", label: "Last week" },
+  { id: "this_month", label: "This month" },
+  { id: "last_month", label: "Last month" },
+  { id: "this_year", label: "This year" },
+  { id: "custom", label: "Custom range" },
 ];
 
 function formatIntervalHint(
@@ -68,10 +68,10 @@ function formatIntervalHint(
   interval: ReturnType<typeof resolveCreatedAtInterval>,
 ): string {
   if (preset === "all" || !interval) {
-    if (preset === "custom") return "Укажите даты начала и конца";
-    return "Все лиды по дате создания";
+    if (preset === "custom") return "Enter start and end dates";
+    return "All leads by created date";
   }
-  const opt = { locale: ru };
+  const opt = { locale: enUS };
   return `${format(interval.start, "d MMM yyyy", opt)} — ${format(interval.end, "d MMM yyyy", opt)}`;
 }
 
@@ -135,12 +135,12 @@ export function DashboardView({
   const conversionFormulaText = React.useMemo(() => {
     const d = statusLabelForCode(statuses, "partner_status", "p_done");
     const inv = statusLabelForCode(statuses, "partner_status", "p_invoice");
-    return `(${d} + ${inv}) / всего лидов строки`;
+    return `(${d} + ${inv}) / total leads in row`;
   }, [statuses]);
 
   const conversionThTitle = React.useMemo(
     () =>
-      `${conversionFormulaText}. Расчёт по кодам в данных: p_done + p_invoice.`,
+      `${conversionFormulaText}. Computed from data codes: p_done + p_invoice.`,
     [conversionFormulaText],
   );
   const volume = React.useMemo(
@@ -172,21 +172,21 @@ export function DashboardView({
       <Card className="shadow-none">
         <CardHeader className="pb-2 pt-3">
           <CardTitle className="text-sm font-medium">
-            Фильтр по дате создания лида
+            Lead created date filter
           </CardTitle>
           <p className="text-[11px] text-neutral-500">
             {formatIntervalHint(datePreset, createdInterval)}
             {datePreset === "all" ? (
-              <span className="text-neutral-400"> · {leads.length} лидов</span>
+              <span className="text-neutral-400"> · {leads.length} leads</span>
             ) : createdInterval !== null ? (
               <span className="text-neutral-400">
                 {" "}
-                · показано {filteredLeads.length} из {leads.length}
+                · showing {filteredLeads.length} of {leads.length}
               </span>
             ) : (
               <span className="text-neutral-400">
                 {" "}
-                · 0 из {leads.length} (задайте период)
+                · 0 of {leads.length} (set a date range)
               </span>
             )}
           </p>
@@ -209,7 +209,7 @@ export function DashboardView({
           {datePreset === "custom" ? (
             <div className="flex flex-wrap items-end gap-3">
               <div className="grid gap-1">
-                <Label className="text-[10px] text-neutral-500">С даты</Label>
+                <Label className="text-[10px] text-neutral-500">From</Label>
                 <Input
                   type="date"
                   className="h-8 w-[150px] text-xs"
@@ -218,7 +218,7 @@ export function DashboardView({
                 />
               </div>
               <div className="grid gap-1">
-                <Label className="text-[10px] text-neutral-500">По дату</Label>
+                <Label className="text-[10px] text-neutral-500">To</Label>
                 <Input
                   type="date"
                   className="h-8 w-[150px] text-xs"
@@ -312,9 +312,9 @@ export function DashboardView({
       <div className="grid gap-3 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Стадии (partner_status)</CardTitle>
+            <CardTitle>Stages (partner_status)</CardTitle>
             <p className="text-[11px] font-normal text-neutral-500">
-              Подписи из справочника статусов; на графике и в подсказке можно увидеть код.
+              Labels from the status catalog; hover the chart or tooltip to see the code.
             </p>
           </CardHeader>
           <CardContent className="h-56">
@@ -339,9 +339,9 @@ export function DashboardView({
 
         <Card>
           <CardHeader>
-            <CardTitle>Объёмы (USD)</CardTitle>
+            <CardTitle>Volumes (USD)</CardTitle>
             <p className="text-[11px] font-normal text-neutral-500">
-              Сумма по полям лида за выбранный период (неархивные).
+              Sum of lead fields for the selected period (non-archived).
             </p>
           </CardHeader>
           <CardContent className="grid gap-2 text-sm">
@@ -353,16 +353,16 @@ export function DashboardView({
 
       <Card>
         <CardHeader>
-          <CardTitle>Созданные лиды во времени</CardTitle>
+          <CardTitle>Leads created over time</CardTitle>
           <p className="text-[11px] font-normal text-neutral-500">
-            Ось времени заполняется целиком внутри фильтра; шаг: день / ISO-неделя / месяц в
-            зависимости от длины периода.
+            The time axis spans the full filter range; step is day / ISO week / month
+            depending on range length.
           </p>
         </CardHeader>
         <CardContent className="h-64">
           {trendSeries.length === 0 ? (
             <p className="py-8 text-center text-sm text-neutral-500">
-              Нет лидов с датой создания в выбранном периоде.
+              No leads with a created date in the selected period.
             </p>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -388,7 +388,7 @@ export function DashboardView({
       {leadsByCountryCharts.length > 0 ? (
         <div className="space-y-2">
           <h2 className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-            По странам — те же графики
+            By country — same charts
           </h2>
           <div className="grid gap-4 xl:grid-cols-2">
             {leadsByCountryCharts.map((c) => (
@@ -407,25 +407,26 @@ export function DashboardView({
 
       <Card>
         <CardHeader>
-          <CardTitle>Страна → партнёр: статусы и объёмы</CardTitle>
+          <CardTitle>Country → partner: statuses and volumes</CardTitle>
           <p className="text-[11px] font-normal text-neutral-500">
-            Неархивные лиды в выбранном периоде. Счётчики по полям{" "}
+            Non-archived leads in the selected period. Counts by{" "}
             <code className="rounded bg-neutral-100 px-0.5 dark:bg-neutral-800">transfer_status</code>{" "}
-            и{" "}
+            and{" "}
             <code className="rounded bg-neutral-100 px-0.5 dark:bg-neutral-800">partner_status</code>{" "}
-            (колонки — подписи из справочника). Конверсия:{" "}
+            (columns use catalog labels). Conversion:{" "}
             <span className="font-medium text-neutral-700 dark:text-neutral-300">
               {conversionFormulaText}
             </span>
-            . Внутри страны для Σ, конверсии и USD у партнёров подсвечиваются{" "}
-            <span className="text-emerald-700 dark:text-emerald-400">лучшее</span> и{" "}
-            <span className="text-red-700 dark:text-red-400">худшее</span> значение.
+            . Within each country, the{" "}
+            <span className="text-emerald-700 dark:text-emerald-400">best</span> and{" "}
+            <span className="text-red-700 dark:text-red-400">worst</span> partner values for Σ,
+            conversion, and USD are highlighted.
           </p>
         </CardHeader>
         <CardContent className="px-2 pb-4 sm:px-4">
           {partnerCountryTable.length === 0 ? (
             <p className="py-6 text-center text-sm text-neutral-500">
-              Нет неархивных лидов в выбранном периоде.
+              No non-archived leads in the selected period.
             </p>
           ) : (
             <div className="max-h-[min(70vh,720px)] overflow-auto rounded-md border border-neutral-200 dark:border-neutral-800">
@@ -436,13 +437,13 @@ export function DashboardView({
                       scope="col"
                       className="sticky top-0 z-20 whitespace-nowrap bg-neutral-100 px-2 py-2 font-medium dark:bg-neutral-900"
                     >
-                      Страна
+                      Country
                     </th>
                     <th
                       scope="col"
                       className="sticky top-0 z-20 whitespace-nowrap bg-neutral-100 px-2 py-2 font-medium dark:bg-neutral-900"
                     >
-                      Партнёр
+                      Partner
                     </th>
                     {DASHBOARD_TABLE_ALL_STATUS_KEYS.map((key) => {
                       const label = dashboardTableColumnLabel(statuses, key);
@@ -456,8 +457,8 @@ export function DashboardView({
                           scope="col"
                           title={
                             key === "sent" || key === "accepted"
-                              ? `transfer_status · код: ${key}`
-                              : `partner_status · код: ${key}`
+                              ? `transfer_status · code: ${key}`
+                              : `partner_status · code: ${key}`
                           }
                           className={cn(
                             "sticky top-0 z-20 max-w-[88px] bg-neutral-100 px-1 py-2 text-center text-[9px] leading-tight dark:bg-neutral-900",
@@ -473,7 +474,7 @@ export function DashboardView({
                     <th
                       scope="col"
                       className="sticky top-0 z-20 bg-neutral-100 px-1 py-2 text-center font-medium dark:bg-neutral-900"
-                      title="Всего лидов в строке"
+                      title="Total leads in row"
                     >
                       Σ
                     </th>
@@ -482,7 +483,7 @@ export function DashboardView({
                       className="sticky top-0 z-20 bg-neutral-100 px-1 py-2 text-center font-medium dark:bg-neutral-900"
                       title={conversionThTitle}
                     >
-                      Конв. %
+                      Conv. %
                     </th>
                     <th
                       scope="col"
@@ -607,7 +608,7 @@ function metricValue(
   }
 }
 
-/** Сравнение только между партнёрами одной страны: выше = лучше для всех четырёх метрик. */
+/** Compare partners within one country only; higher is better for all four metrics. */
 function partnerMetricRankInCountry(
   partners: PartnerCountryTableRow[],
   row: PartnerCountryTableRow,
@@ -668,7 +669,7 @@ function FunnelBarTooltip({
     <div className="rounded-md border border-neutral-200 bg-white px-2 py-1.5 text-xs shadow-md dark:border-neutral-700 dark:bg-neutral-950">
       <div className="max-w-[220px] font-medium leading-snug">{row.name}</div>
       {row.code && row.code !== "_other" ? (
-        <div className="text-[10px] text-neutral-500">Код: {row.code}</div>
+        <div className="text-[10px] text-neutral-500">Code: {row.code}</div>
       ) : null}
       <div className="mt-0.5 tabular-nums font-semibold">{payload[0]?.value ?? row.v}</div>
     </div>
@@ -707,7 +708,7 @@ function CountryChartsBlock({
       <CardContent className="grid gap-3 pb-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <p className="mb-1 text-[10px] font-medium text-neutral-500">Стадии</p>
+            <p className="mb-1 text-[10px] font-medium text-neutral-500">Stages</p>
             <div className="h-40 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={funnelBars} margin={{ bottom: 20, left: 0, right: 4 }}>
@@ -733,10 +734,10 @@ function CountryChartsBlock({
           </div>
         </div>
         <div>
-          <p className="mb-1 text-[10px] font-medium text-neutral-500">Созданы по времени</p>
+          <p className="mb-1 text-[10px] font-medium text-neutral-500">Created over time</p>
           <div className="h-36 w-full">
             {trend.length === 0 ? (
-              <p className="py-6 text-center text-[11px] text-neutral-500">Нет точек</p>
+              <p className="py-6 text-center text-[11px] text-neutral-500">No data points</p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trend} margin={{ left: 0, right: 4 }}>
@@ -770,11 +771,11 @@ function StatCard({
   title: string;
   value: string;
   subtitle?: string;
-  /** Показывается в нативной подсказке при наведении на карточку */
+  /** Shown in the native tooltip when hovering the card */
   codeHint?: string;
 }) {
   return (
-    <Card title={codeHint ? `Код: ${codeHint}` : undefined}>
+    <Card title={codeHint ? `Code: ${codeHint}` : undefined}>
       <CardHeader className="pb-1">
         <CardTitle className="text-xs font-medium text-neutral-500">
           {title}

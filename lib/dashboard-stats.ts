@@ -15,7 +15,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import type { CreatedAtInterval } from "@/lib/dashboard-date-filter";
 import { statusLabelForCode } from "@/lib/status-labels";
 import type { LeadRow, StatusRow } from "@/types/models";
@@ -94,7 +94,7 @@ function countTransferStatus(leads: LeadRow[], code: string): number {
 
 const STAGE_CODES = ["p_accepted", "p_work", "p_decision", "p_done"] as const;
 
-/** Bar chart: partner_status counts; `name` — подпись из справочника, `code` — для подсказок. */
+/** Bar chart: partner_status counts; `name` is catalog label, `code` for tooltips. */
 export function stageFunnelBars(
   leads: LeadRow[],
   statuses: StatusRow[],
@@ -112,7 +112,7 @@ export function stageFunnelBars(
       name: statusLabelForCode(statuses, "partner_status", code),
       v: countPartnerStatus(rows, code),
     })),
-    { code: "_other", name: "Прочие", v: other },
+    { code: "_other", name: "Other", v: other },
   ];
 }
 
@@ -131,9 +131,9 @@ export function volumeTotals(leads: LeadRow[]): {
 }
 
 /**
- * Ряд «создано лидов» по выбранному периоду: все точки на оси времени внутри интервала,
- * пустые интервалы — с нулём (линия не «скачет» из-за двух точек).
- * Шаг: день (≤31 дн), неделя ISO (до ~200 дн), месяц.
+ * “Leads created” series for the selected period: every bucket on the time axis inside the interval,
+ * empty buckets as zero (line does not jump between two points).
+ * Step: day (≤31d), ISO week (up to ~200d), month.
  */
 export function buildCreationTrendSeries(
   leads: LeadRow[],
@@ -176,7 +176,7 @@ export function buildCreationTrendSeries(
       const s = startOfDay(day);
       const e = endOfDay(day);
       return {
-        period: format(day, "d MMM", { locale: ru }),
+        period: format(day, "d MMM", { locale: enUS }),
         count: countBetween(s, e),
       };
     });
@@ -204,7 +204,7 @@ export function buildCreationTrendSeries(
     const s = startOfMonth(m);
     const e = endOfMonth(m);
     return {
-      period: format(m, "LLLL yyyy", { locale: ru }),
+      period: format(m, "LLLL yyyy", { locale: enUS }),
       count: countBetween(s, e),
     };
   });
@@ -285,7 +285,7 @@ export function computeAdminStageByCountry(leads: LeadRow[]): AdminStageByCountr
   return out;
 }
 
-/** Колонки таблицы дашборда: transfer_status, затем partner_status. */
+/** Dashboard table columns: transfer_status, then partner_status. */
 export const DASHBOARD_TABLE_TRANSFER_STATUSES = ["sent", "accepted"] as const;
 export const DASHBOARD_TABLE_PARTNER_STATUSES = [
   "p_accepted",
@@ -358,7 +358,7 @@ function aggregatePartnerCountryRows(leads: LeadRow[]): PartnerCountryTableRow {
 }
 
 /**
- * Таблица «страна → партнёр» с разбивкой по статусам (неархивные лиды, обычно уже отфильтрованные по дате создания).
+ * Country → partner table with status breakdown (non-archived leads; usually already filtered by created date).
  */
 export function computePartnerCountryStatusTable(
   leads: LeadRow[],
@@ -392,9 +392,9 @@ export function computePartnerCountryStatusTable(
   }
 
   flat.sort((a, b) => {
-    const c = a.country_name.localeCompare(b.country_name, "ru");
+    const c = a.country_name.localeCompare(b.country_name, "en");
     if (c !== 0) return c;
-    return a.row.partner_name.localeCompare(b.row.partner_name, "ru");
+    return a.row.partner_name.localeCompare(b.row.partner_name, "en");
   });
 
   const groups: PartnerCountryTableGroup[] = [];

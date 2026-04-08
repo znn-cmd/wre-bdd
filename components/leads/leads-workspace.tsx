@@ -330,7 +330,7 @@ function statusBadgeVariant(
   return "default";
 }
 
-/** Комментарий в таблице: 1–2 строки, полный текст в title. */
+/** Table comment: 1–2 lines; full text in title. */
 function CompactCommentCell({
   text,
   compact,
@@ -859,7 +859,7 @@ function LeadEditDialog({
                 <ReadOnlyField
                   label="Phone"
                   value={draft.client_phone ?? ""}
-                  hint="Только просмотр"
+                  hint="Read only"
                 />
               ) : (
                 <Field
@@ -888,7 +888,7 @@ function LeadEditDialog({
             <ReadOnlyField
               label="Phone"
               value={draft.client_phone ?? ""}
-              hint="Только просмотр"
+              hint="Read only"
             />
           )}
           <SelectField
@@ -936,7 +936,7 @@ function LeadEditDialog({
             <ReadOnlyArea
               label="Manager comment"
               value={draft.manager_comment ?? ""}
-              hint="Комментарий менеджера (только просмотр)"
+              hint="Manager comment (read only)"
             />
           )}
           <Area

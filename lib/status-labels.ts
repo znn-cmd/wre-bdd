@@ -5,7 +5,7 @@ export type StatusCategory =
   | "partner_status"
   | "final_outcome";
 
-/** Строка справочника Statuses по коду (любая категория). */
+/** Statuses catalog row for a code (any category). */
 export function statusRowForCode(
   statuses: StatusRow[],
   category: StatusCategory,
@@ -32,7 +32,7 @@ export function statusColorTextClass(color: string): string | undefined {
   return undefined;
 }
 
-/** Подпись из листа Statuses; если нет — возвращается код. */
+/** Label from Statuses sheet; falls back to code if missing. */
 export function statusLabelForCode(
   statuses: StatusRow[],
   category: StatusCategory,
@@ -45,7 +45,7 @@ export function statusLabelForCode(
   return label || c;
 }
 
-/** Категория статуса для колонок таблицы дашборда. */
+/** Status category for dashboard table columns. */
 export function dashboardTableStatusCategory(
   columnKey: string,
 ): "transfer_status" | "partner_status" {
@@ -53,7 +53,7 @@ export function dashboardTableStatusCategory(
   return k === "sent" || k === "accepted" ? "transfer_status" : "partner_status";
 }
 
-/** Заголовок колонки таблицы дашборда (sent/accepted → transfer, остальное → partner). */
+/** Dashboard table column header (sent/accepted → transfer, else → partner). */
 export function dashboardTableColumnLabel(
   statuses: StatusRow[],
   columnKey: string,
