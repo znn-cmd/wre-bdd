@@ -1,0 +1,26 @@
+/**
+ * Partner-facing phone: hide digits except the last 4 of the digit run.
+ * Non-digit characters are ignored for counting; if there are no digits,
+ * falls back to masking all but the last 4 characters of the raw string.
+ */
+export function maskPhoneLastFourDigits(phone: string): string {
+  const raw = String(phone ?? "").trim();
+  if (!raw) return "";
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 0) {
+    if (raw.length <= 4) return raw.length > 0 ? "*".repeat(raw.length) : "";
+    return "*".repeat(raw.length - 4) + raw.slice(-4);
+  }
+  const last4 = digits.slice(-4);
+  const nStars = Math.max(0, digits.length - 4);
+  return "*".repeat(nStars) + last4;
+}
+
+export function redactLeadPhoneForPartner<T extends { client_phone: string }>(
+  lead: T,
+): T {
+  return {
+    ...lead,
+    client_phone: maskPhoneLastFourDigits(lead.client_phone),
+  };
+}

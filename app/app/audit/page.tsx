@@ -1,8 +1,30 @@
+import { maskPhoneLastFourDigits } from "@/lib/phone-display";
 import { requireLeadsContext } from "@/server/data/load-app";
+import { getSession } from "@/server/auth/get-session";
+import { redirect } from "next/navigation";
 import { loadAuditLogPage } from "@/server/sheets/repository";
 
+function auditChangeDisplay(
+  fieldName: string,
+  oldVal: string,
+  newVal: string,
+  maskPhone: boolean,
+): { old: string; new: string } {
+  const isPhone = (fieldName ?? "").trim() === "client_phone";
+  if (!maskPhone || !isPhone) {
+    return { old: oldVal, new: newVal };
+  }
+  return {
+    old: maskPhoneLastFourDigits(oldVal),
+    new: maskPhoneLastFourDigits(newVal),
+  };
+}
+
 export default async function AuditPage() {
+  const user = await getSession();
+  if (!user) redirect("/access/invalid");
   const { leads } = await requireLeadsContext();
+  const maskPhone = user.role === "partner";
   const visibleIds = new Set(leads.map((l) => l.lead_id));
   const logs = await loadAuditLogPage({ maxRows: 1500 });
   const filtered = logs.filter(
@@ -29,7 +51,14 @@ export default async function AuditPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((row) => (
+            {filtered.map((row) => {
+              const { old: oldD, new: newD } = auditChangeDisplay(
+                row.field_name,
+                row.old_value,
+                row.new_value,
+                maskPhone,
+              );
+              return (
               <tr
                 key={row.log_id}
                 className="border-b border-neutral-100 dark:border-neutral-900"
@@ -46,13 +75,14 @@ export default async function AuditPage() {
                 <td className="px-2 py-1">{row.user_role}</td>
                 <td className="px-2 py-1">{row.action_type}</td>
                 <td className="px-2 py-1">{row.field_name}</td>
-                <td className="max-w-[280px] truncate px-2 py-1 text-neutral-600 dark:text-neutral-400" title={`${row.old_value} → ${row.new_value}`}>
-                  {row.old_value.slice(0, 40)}
-                  {row.old_value ? " → " : ""}
-                  {row.new_value.slice(0, 40)}
+                <td className="max-w-[280px] truncate px-2 py-1 text-neutral-600 dark:text-neutral-400" title={`${oldD} → ${newD}`}>
+                  {oldD.slice(0, 40)}
+                  {oldD ? " → " : ""}
+                  {newD.slice(0, 40)}
                 </td>
               </tr>
-            ))}
+            );
+            })}
           </tbody>
         </table>
       </div>

@@ -133,6 +133,8 @@ export type StatusRow = {
   sort_order: string;
   is_final: string;
   active_flag: string;
+  /** Display hint in tables: empty = default; yellow | green | red = bold colored text. */
+  color: string;
 };
 
 export type AuditLogRow = {

@@ -126,6 +126,7 @@ export const HEADERS = {
     "sort_order",
     "is_final",
     "active_flag",
+    "color",
   ],
   Audit_Log: [
     "log_id",

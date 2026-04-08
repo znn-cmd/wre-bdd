@@ -19,6 +19,12 @@ import {
 } from "date-fns";
 import { useRouter } from "next/navigation";
 import { parseSheetBool } from "@/lib/dates";
+import { maskPhoneLastFourDigits } from "@/lib/phone-display";
+import {
+  statusColorTextClass,
+  statusRowForCode,
+} from "@/lib/status-labels";
+import { cn } from "@/lib/utils";
 import type { LeadRow, SessionUser, StatusRow } from "@/types/models";
 import { useLeadsUi } from "@/lib/stores/leads-ui";
 import { Input } from "@/components/ui/input";
@@ -126,8 +132,24 @@ function LeadTableStatusCell({
   const value = lead[field] ?? "";
   const options = statusesForSelect(reference.statuses, category);
   const label = statusLabelForCode(reference.statuses, category, value);
+  const catalogTone = statusColorTextClass(
+    statusRowForCode(reference.statuses, category, value)?.color ?? "",
+  );
 
   if (!canEdit) {
+    if (catalogTone) {
+      return (
+        <span
+          className={cn(
+            "max-w-[160px] cursor-default truncate text-[11px]",
+            catalogTone,
+          )}
+          title={label}
+        >
+          {label}
+        </span>
+      );
+    }
     return (
       <Badge
         variant={statusBadgeVariant(label === "—" ? "" : label)}
@@ -178,6 +200,10 @@ function InlineStatusSelect({
     local.trim() !== "" &&
     !options.some((o) => o.status_code === local);
 
+  const selectTone = statusColorTextClass(
+    statusRowForCode(allStatuses, category, local)?.color ?? "",
+  );
+
   const change = async (next: string) => {
     if (next === local) return;
     const prev = local;
@@ -197,7 +223,10 @@ function InlineStatusSelect({
   return (
     <select
       disabled={pending}
-      className="h-7 max-w-[180px] cursor-pointer truncate rounded-md border border-neutral-200 bg-white px-1.5 text-[11px] shadow-sm dark:border-neutral-800 dark:bg-neutral-950"
+      className={cn(
+        "h-7 max-w-[180px] cursor-pointer truncate rounded-md border border-neutral-200 bg-white px-1.5 text-[11px] shadow-sm dark:border-neutral-800 dark:bg-neutral-950",
+        selectTone,
+      )}
       value={local}
       onChange={(e) => void change(e.target.value)}
       title={statusLabelForCode(allStatuses, category, local)}
@@ -293,10 +322,17 @@ export function LeadsWorkspace({
         if (d && isAfter(d, endOfDay(parseISO(ui.dateTo)))) return false;
       }
       if (!q) return true;
+      const phoneHay =
+        user.role === "partner"
+          ? (() => {
+              const d = String(l.client_phone ?? "").replace(/\D/g, "");
+              return d.length >= 4 ? d.slice(-4) : d;
+            })()
+          : l.client_phone;
       const hay = [
         l.lead_id,
         l.client_name,
-        l.client_phone,
+        phoneHay,
         l.partner_name,
         l.crm_deal_id,
         l.source_manager_name,
@@ -307,7 +343,7 @@ export function LeadsWorkspace({
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [leads, ui]);
+  }, [leads, ui, user.role]);
 
   const onLeadSaved = React.useCallback(() => {
     router.refresh();
@@ -360,14 +396,18 @@ export function LeadsWorkspace({
       {
         accessorKey: "client_phone",
         header: "Phone",
-        cell: (c) => (
-          <span
-            className="max-w-[120px] truncate font-mono text-[11px]"
-            title={String(c.getValue() ?? "")}
-          >
-            {String(c.getValue() ?? "") || "—"}
-          </span>
-        ),
+        cell: (c) => {
+          const raw = String(c.row.original.client_phone ?? "");
+          const display = maskPhoneLastFourDigits(raw);
+          return (
+            <span
+              className="max-w-[120px] truncate font-mono text-[11px]"
+              title={display || undefined}
+            >
+              {display || "—"}
+            </span>
+          );
+        },
       },
       {
         id: "manager_comment",
@@ -766,7 +806,7 @@ function LeadEditDialog({
           ) : (
             <ReadOnlyField
               label="Phone"
-              value={draft.client_phone ?? ""}
+              value={maskPhoneLastFourDigits(draft.client_phone ?? "")}
               hint="Только просмотр"
             />
           )}
@@ -776,12 +816,26 @@ function LeadEditDialog({
             onChange={(v) => setDraft((d) => ({ ...d, transfer_status: v }))}
             options={statusesForSelect(reference.statuses, "transfer_status")}
             disabled={isPartner}
+            toneClass={statusColorTextClass(
+              statusRowForCode(
+                reference.statuses,
+                "transfer_status",
+                draft.transfer_status ?? "",
+              )?.color ?? "",
+            )}
           />
           <SelectField
             label="Partner status"
             value={draft.partner_status ?? ""}
             onChange={(v) => setDraft((d) => ({ ...d, partner_status: v }))}
             options={statusesForSelect(reference.statuses, "partner_status")}
+            toneClass={statusColorTextClass(
+              statusRowForCode(
+                reference.statuses,
+                "partner_status",
+                draft.partner_status ?? "",
+              )?.color ?? "",
+            )}
           />
           <SelectField
             label="Final outcome"
@@ -789,6 +843,13 @@ function LeadEditDialog({
             onChange={(v) => setDraft((d) => ({ ...d, final_outcome: v }))}
             options={statusesForSelect(reference.statuses, "final_outcome")}
             disabled={isPartner}
+            toneClass={statusColorTextClass(
+              statusRowForCode(
+                reference.statuses,
+                "final_outcome",
+                draft.final_outcome ?? "",
+              )?.color ?? "",
+            )}
           />
           {isPartner ? (
             <Field
@@ -945,12 +1006,14 @@ function SelectField({
   onChange,
   options,
   disabled,
+  toneClass,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: { status_code: string; status_label: string }[];
   disabled?: boolean;
+  toneClass?: string;
 }) {
   const missing =
     value.trim() !== "" &&
@@ -960,7 +1023,10 @@ function SelectField({
       <Label>{label}</Label>
       <select
         disabled={disabled}
-        className="h-8 rounded-md border border-neutral-200 bg-white px-2 text-sm dark:border-neutral-800 dark:bg-neutral-950"
+        className={cn(
+          "h-8 rounded-md border border-neutral-200 bg-white px-2 text-sm dark:border-neutral-800 dark:bg-neutral-950",
+          toneClass,
+        )}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >

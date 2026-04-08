@@ -119,6 +119,12 @@ export async function adminSavePartnerAction(raw: unknown) {
 
 const leadStatusCategorySchema = z.enum(["transfer_status", "partner_status"]);
 
+function normalizeStatusColor(raw: string): string {
+  const c = String(raw ?? "").trim().toLowerCase();
+  if (c === "yellow" || c === "green" || c === "red") return c;
+  return "";
+}
+
 const statusMutateSchema = z.object({
   category: leadStatusCategorySchema,
   status_code: z.string().min(1).max(80),
@@ -127,6 +133,7 @@ const statusMutateSchema = z.object({
   sort_order: z.string().max(20).optional().default("0"),
   is_final: z.enum(["true", "false"]).optional().default("false"),
   active_flag: z.enum(["true", "false"]).optional().default("true"),
+  color: z.string().max(20).optional().default(""),
   /** Set when updating an existing row (previous `status_code` before any rename). */
   previous_status_code: z.string().max(80).optional().default(""),
 });
@@ -142,6 +149,7 @@ export async function adminSaveStatusAction(raw: unknown) {
     sort_order: input.sort_order.trim() || "0",
     is_final: input.is_final,
     active_flag: input.active_flag,
+    color: normalizeStatusColor(input.color),
   };
   const prev = input.previous_status_code.trim();
   if (!prev) {

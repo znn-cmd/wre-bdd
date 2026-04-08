@@ -149,14 +149,15 @@ function StatusCatalogSection({
   return (
     <section className="space-y-3">
       <h2 className="text-sm font-semibold">{title}</h2>
-      <p className="max-w-2xl text-[11px] text-neutral-500 dark:text-neutral-400">
+        <p className="max-w-2xl text-[11px] text-neutral-500 dark:text-neutral-400">
         <strong>Code</strong> is stored in leads (stable id). <strong>Label</strong>{" "}
-        is shown in dropdowns. Inactive rows are hidden from pickers but existing lead
-        values stay as-is.
+        is shown in dropdowns. <strong>Color</strong> (optional) highlights the status
+        text in the leads table: yellow / green / red (bold). Inactive rows are hidden
+        from pickers but existing lead values stay as-is.
       </p>
       <CreateStatusForm category={category} onDone={onSaved} />
       <div className="overflow-x-auto rounded-md border border-neutral-200 dark:border-neutral-800">
-        <table className="w-full min-w-[880px] border-collapse text-left text-xs">
+        <table className="w-full min-w-[960px] border-collapse text-left text-xs">
           <thead className="bg-neutral-50 text-[10px] uppercase dark:bg-neutral-900">
             <tr>
               <th className="border-b px-2 py-2">Code</th>
@@ -165,6 +166,7 @@ function StatusCatalogSection({
               <th className="border-b px-2 py-2 w-16">Sort</th>
               <th className="border-b px-2 py-2">Final</th>
               <th className="border-b px-2 py-2">Active</th>
+              <th className="border-b px-2 py-2">Color</th>
               <th className="border-b px-2 py-2">Actions</th>
             </tr>
           </thead>
@@ -190,6 +192,7 @@ function CreateStatusForm({
   const [status_label, setLabel] = React.useState("");
   const [status_description, setDesc] = React.useState("");
   const [sort_order, setSort] = React.useState("0");
+  const [color, setColor] = React.useState("");
   const submit = async () => {
     try {
       await adminSaveStatusAction({
@@ -200,12 +203,14 @@ function CreateStatusForm({
         sort_order,
         is_final: "false",
         active_flag: "true",
+        color,
       });
       toast.success("Status added");
       setCode("");
       setLabel("");
       setDesc("");
       setSort("0");
+      setColor("");
       onDone();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -239,6 +244,19 @@ function CreateStatusForm({
         <Label className="text-[10px]">Sort</Label>
         <Input className="h-8 w-16 text-xs" value={sort_order} onChange={(e) => setSort(e.target.value)} />
       </div>
+      <div className="grid gap-1">
+        <Label className="text-[10px]">Color</Label>
+        <select
+          className="h-8 w-[100px] rounded-md border border-neutral-200 bg-white px-2 text-xs dark:border-neutral-800 dark:bg-neutral-950"
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+        >
+          <option value="">default</option>
+          <option value="yellow">yellow</option>
+          <option value="green">green</option>
+          <option value="red">red</option>
+        </select>
+      </div>
       <Button type="button" size="sm" className="h-8" onClick={() => void submit()}>
         Add status
       </Button>
@@ -264,6 +282,7 @@ function StatusRowEditor({
   const [active_flag, setAct] = React.useState(
     s.active_flag === "true" || s.active_flag === "TRUE" ? "true" : "false",
   );
+  const [color, setColor] = React.useState((s.color ?? "").trim());
 
   React.useEffect(() => {
     setCode(s.status_code);
@@ -272,6 +291,7 @@ function StatusRowEditor({
     setSort(s.sort_order || "0");
     setFinal(s.is_final === "true" || s.is_final === "TRUE" ? "true" : "false");
     setAct(s.active_flag === "true" || s.active_flag === "TRUE" ? "true" : "false");
+    setColor((s.color ?? "").trim());
   }, [s]);
 
   const save = async () => {
@@ -284,6 +304,7 @@ function StatusRowEditor({
         sort_order,
         is_final: is_final as "true" | "false",
         active_flag: active_flag as "true" | "false",
+        color,
         previous_status_code: originalCode,
       });
       toast.success("Saved");
@@ -345,6 +366,18 @@ function StatusRowEditor({
         >
           <option value="true">true</option>
           <option value="false">false</option>
+        </select>
+      </td>
+      <td className="border-b px-2 py-1">
+        <select
+          className="h-7 w-[100px] rounded border bg-white px-1 text-xs dark:bg-neutral-950"
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+        >
+          <option value="">default</option>
+          <option value="yellow">yellow</option>
+          <option value="green">green</option>
+          <option value="red">red</option>
         </select>
       </td>
       <td className="border-b px-2 py-1">

@@ -18,8 +18,12 @@ import type { LeadRow, SessionUser, StatusRow } from "@/types/models";
 import type { PartnerCountryTableRow } from "@/lib/dashboard-stats";
 import {
   dashboardTableColumnLabel,
+  dashboardTableStatusCategory,
+  statusColorTextClass,
   statusLabelForCode,
+  statusRowForCode,
 } from "@/lib/status-labels";
+import { cn } from "@/lib/utils";
 import {
   type DashboardDatePreset,
   filterLeadsByCreatedAtInterval,
@@ -442,6 +446,10 @@ export function DashboardView({
                     </th>
                     {DASHBOARD_TABLE_ALL_STATUS_KEYS.map((key) => {
                       const label = dashboardTableColumnLabel(statuses, key);
+                      const cat = dashboardTableStatusCategory(key);
+                      const headerTone = statusColorTextClass(
+                        statusRowForCode(statuses, cat, key)?.color ?? "",
+                      );
                       return (
                         <th
                           key={key}
@@ -451,7 +459,12 @@ export function DashboardView({
                               ? `transfer_status · код: ${key}`
                               : `partner_status · код: ${key}`
                           }
-                          className="sticky top-0 z-20 max-w-[88px] bg-neutral-100 px-1 py-2 text-center text-[9px] font-medium leading-tight text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                          className={cn(
+                            "sticky top-0 z-20 max-w-[88px] bg-neutral-100 px-1 py-2 text-center text-[9px] leading-tight dark:bg-neutral-900",
+                            headerTone
+                              ? headerTone
+                              : "font-medium text-neutral-700 dark:text-neutral-300",
+                          )}
                         >
                           <span className="line-clamp-3">{label}</span>
                         </th>
