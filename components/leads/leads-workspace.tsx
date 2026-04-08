@@ -1165,7 +1165,8 @@ function CreateLeadDialog({
     client_name: "",
     client_phone: "",
     client_email: "",
-    service_type: "",
+    client_language: "",
+    manager_comment: "",
     crm_deal_id: "",
   });
 
@@ -1190,12 +1191,51 @@ function CreateLeadDialog({
     }
   }, [open, f.country_code, f.partner_id, partnersForCountry]);
 
+  React.useEffect(() => {
+    if (!open) return;
+    const cc = reference.countries[0]?.country_code ?? "";
+    const forCountry = reference.partners.filter((p) =>
+      p.operating_country_codes.some(
+        (c) => c.toUpperCase() === cc.trim().toUpperCase(),
+      ),
+    );
+    setF({
+      country_code: cc,
+      partner_id:
+        forCountry[0]?.partner_id ?? reference.partners[0]?.partner_id ?? "",
+      client_name: "",
+      client_phone: "",
+      client_email: "",
+      client_language: "",
+      manager_comment: "",
+      crm_deal_id: "",
+    });
+    // Reset form only when the dialog opens (not when parent re-renders).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional
+  }, [open]);
+
   const scopeEmpty =
     reference.countries.length === 0 || reference.partners.length === 0;
 
+  const formComplete = React.useMemo(() => {
+    if (scopeEmpty || !f.country_code.trim() || !f.partner_id.trim()) {
+      return false;
+    }
+    if (!f.client_name.trim()) return false;
+    if (!f.client_phone.trim()) return false;
+    if (!f.client_email.trim()) return false;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.client_email.trim())) {
+      return false;
+    }
+    if (!f.client_language.trim()) return false;
+    if (!f.manager_comment.trim()) return false;
+    if (!f.crm_deal_id.trim()) return false;
+    return true;
+  }, [f, scopeEmpty]);
+
   const submit = async () => {
     try {
-      const res = await createLeadAction(f);
+      const res = await createLeadAction({ ...f, service_type: "" });
       toast.success(`Created ${res.leadId}`);
       onOpenChange(false);
       onCreated();
@@ -1206,9 +1246,12 @@ function CreateLeadDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>New lead</DialogTitle>
+          <p className="text-xs font-normal text-neutral-500">
+            All fields are required.
+          </p>
         </DialogHeader>
         <div className="grid gap-2">
           {scopeEmpty ? (
@@ -1220,7 +1263,7 @@ function CreateLeadDialog({
             </p>
           ) : null}
           <div className="grid gap-1">
-            <Label>Country</Label>
+            <Label>Country *</Label>
             <select
               className="h-8 rounded-md border px-2 text-sm"
               value={f.country_code}
@@ -1235,7 +1278,7 @@ function CreateLeadDialog({
             </select>
           </div>
           <div className="grid gap-1">
-            <Label>Partner</Label>
+            <Label>Partner *</Label>
             <select
               className="h-8 rounded-md border px-2 text-sm"
               value={f.partner_id}
@@ -1255,22 +1298,27 @@ function CreateLeadDialog({
             onChange={(v) => setF((x) => ({ ...x, client_name: v }))}
           />
           <Field
-            label="Phone"
+            label="Phone *"
             value={f.client_phone}
             onChange={(v) => setF((x) => ({ ...x, client_phone: v }))}
           />
           <Field
-            label="Email"
+            label="Email *"
             value={f.client_email}
             onChange={(v) => setF((x) => ({ ...x, client_email: v }))}
           />
           <Field
-            label="Service"
-            value={f.service_type}
-            onChange={(v) => setF((x) => ({ ...x, service_type: v }))}
+            label="Client language *"
+            value={f.client_language}
+            onChange={(v) => setF((x) => ({ ...x, client_language: v }))}
+          />
+          <Area
+            label="Comment from WRE manager *"
+            value={f.manager_comment}
+            onChange={(v) => setF((x) => ({ ...x, manager_comment: v }))}
           />
           <Field
-            label="CRM deal"
+            label="CRM deal *"
             value={f.crm_deal_id}
             onChange={(v) => setF((x) => ({ ...x, crm_deal_id: v }))}
           />
@@ -1279,15 +1327,7 @@ function CreateLeadDialog({
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            disabled={
-              scopeEmpty ||
-              !f.client_name.trim() ||
-              !f.country_code ||
-              !f.partner_id
-            }
-            onClick={() => void submit()}
-          >
+          <Button disabled={!formComplete} onClick={() => void submit()}>
             Create
           </Button>
         </div>
