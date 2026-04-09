@@ -34,6 +34,10 @@ import {
 import type { AuditLogRow, LeadRow, UserRow } from "@/types/models";
 import { isUserRole } from "@/types/roles";
 import { notifyPartnerNewLead } from "@/server/telegram/notify-new-lead";
+import {
+  transferStatusCodesTriggeringPartnerTelegram,
+  userRoleMayTriggerPartnerTelegramNotify,
+} from "@/server/telegram/notify-rules";
 
 function statusHintSets(
   statuses: { category: string; status_code: string }[],
@@ -136,12 +140,11 @@ export async function createLeadAction(raw: unknown) {
 
   revalidateTag("leads", "default");
 
+  const notifyCodes = transferStatusCodesTriggeringPartnerTelegram();
   if (
     partnerRow &&
-    (user.role === "our_manager" ||
-      user.role === "admin" ||
-      user.role === "rop" ||
-      user.role === "partner_dept_manager")
+    userRoleMayTriggerPartnerTelegramNotify(user.role) &&
+    notifyCodes.has((row.transfer_status ?? "").trim())
   ) {
     await notifyPartnerNewLead({ lead: row, partner: partnerRow }).catch(
       () => undefined,
@@ -194,6 +197,20 @@ export async function updateLeadAction(leadId: string, raw: unknown) {
   }
 
   await updateLeadRow(leadId, withTs);
+
+  const notifyCodes = transferStatusCodesTriggeringPartnerTelegram();
+  const prevTs = (prev.transfer_status ?? "").trim();
+  const nextTs = (withTs.transfer_status ?? "").trim();
+  if (
+    prevTs !== nextTs &&
+    notifyCodes.has(nextTs) &&
+    pAfter &&
+    userRoleMayTriggerPartnerTelegramNotify(user.role)
+  ) {
+    await notifyPartnerNewLead({ lead: withTs, partner: pAfter }).catch(
+      () => undefined,
+    );
+  }
 
   for (const [field, newVal] of Object.entries(patch)) {
     const key = field as keyof LeadRow;

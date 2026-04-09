@@ -48,17 +48,28 @@ export async function notifyPartnerNewLead(opts: {
   const base = getAppBaseUrl();
   const leadUrl = `${base}/app/leads/${encodeURIComponent(opts.lead.lead_id)}`;
 
+  const mc = (opts.lead.manager_comment ?? "").trim();
+  const mcShort =
+    mc.length > 600 ? `${mc.slice(0, 600)}…` : mc;
   const text = [
     `New lead: ${opts.partner.partner_name}`,
     `Country: ${opts.lead.country_name || opts.lead.country_code}`,
-    `CRM: ${opts.lead.crm_deal_id || "—"}`,
     `Client: ${opts.lead.client_name}`,
     `Phone: ${opts.lead.client_phone}`,
-    `Service: ${opts.lead.service_type}`,
+    (opts.lead.client_email ?? "").trim()
+      ? `Email: ${opts.lead.client_email}`
+      : null,
+    (opts.lead.client_language ?? "").trim()
+      ? `Language: ${opts.lead.client_language}`
+      : null,
+    mcShort ? `WRE manager comment: ${mcShort}` : null,
     `Our manager: ${opts.lead.source_manager_name}`,
     `Created: ${opts.lead.created_at}`,
     `Open: ${leadUrl}`,
-  ].join("\n");
+    `CRM: ${opts.lead.crm_deal_id || "—"}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const logBase = {
     telegram_log_id: newLogId("TG"),
