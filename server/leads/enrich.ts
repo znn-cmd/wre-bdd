@@ -73,6 +73,7 @@ function emptyLead(): LeadRow {
     "client_phone",
     "client_email",
     "client_language",
+    "client_target_budget",
     "service_type",
     "source_channel",
     "transfer_status",

@@ -816,6 +816,7 @@ function LeadEditDialog({
       client_name: lead.client_name,
       client_phone: lead.client_phone,
       client_email: lead.client_email,
+      client_target_budget: lead.client_target_budget,
       crm_deal_id: lead.crm_deal_id,
       service_type: lead.service_type,
       final_outcome: lead.final_outcome,
@@ -872,6 +873,13 @@ function LeadEditDialog({
                 label="Email"
                 value={draft.client_email ?? ""}
                 onChange={(v) => setDraft((d) => ({ ...d, client_email: v }))}
+              />
+              <Field
+                label="Client target budget"
+                value={draft.client_target_budget ?? ""}
+                onChange={(v) =>
+                  setDraft((d) => ({ ...d, client_target_budget: v }))
+                }
               />
               <Field
                 label="CRM deal"
@@ -978,15 +986,21 @@ function Field({
   label,
   value,
   onChange,
+  placeholder,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  placeholder?: string;
 }) {
   return (
     <div className="grid gap-1">
       <Label>{label}</Label>
-      <Input value={value} onChange={(e) => onChange(e.target.value)} />
+      <Input
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </div>
   );
 }
@@ -1166,6 +1180,7 @@ function CreateLeadDialog({
     client_phone: "",
     client_email: "",
     client_language: "",
+    client_target_budget: "",
     manager_comment: "",
     crm_deal_id: "",
   });
@@ -1207,6 +1222,7 @@ function CreateLeadDialog({
       client_phone: "",
       client_email: "",
       client_language: "",
+      client_target_budget: "",
       manager_comment: "",
       crm_deal_id: "",
     });
@@ -1223,11 +1239,10 @@ function CreateLeadDialog({
     }
     if (!f.client_name.trim()) return false;
     if (!f.client_phone.trim()) return false;
-    if (!f.client_email.trim()) return false;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.client_email.trim())) {
-      return false;
-    }
+    const email = f.client_email.trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false;
     if (!f.client_language.trim()) return false;
+    if (!f.client_target_budget.trim()) return false;
     if (!f.manager_comment.trim()) return false;
     if (!f.crm_deal_id.trim()) return false;
     return true;
@@ -1250,7 +1265,7 @@ function CreateLeadDialog({
         <DialogHeader>
           <DialogTitle>New lead</DialogTitle>
           <p className="text-xs font-normal text-neutral-500">
-            All fields are required.
+            All fields are required except email.
           </p>
         </DialogHeader>
         <div className="grid gap-2">
@@ -1303,7 +1318,7 @@ function CreateLeadDialog({
             onChange={(v) => setF((x) => ({ ...x, client_phone: v }))}
           />
           <Field
-            label="Email *"
+            label="Email"
             value={f.client_email}
             onChange={(v) => setF((x) => ({ ...x, client_email: v }))}
           />
@@ -1311,6 +1326,12 @@ function CreateLeadDialog({
             label="Client language *"
             value={f.client_language}
             onChange={(v) => setF((x) => ({ ...x, client_language: v }))}
+          />
+          <Field
+            label="Client target budget *"
+            value={f.client_target_budget}
+            onChange={(v) => setF((x) => ({ ...x, client_target_budget: v }))}
+            placeholder="e.g. 5000 USD"
           />
           <Area
             label="Comment from WRE manager *"

@@ -198,6 +198,7 @@ const OUR_MANAGER_FIELDS: (keyof LeadRow)[] = [
   "client_name",
   "client_email",
   "client_language",
+  "client_target_budget",
   "service_type",
   "source_channel",
   "transfer_status",

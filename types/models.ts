@@ -19,6 +19,8 @@ export type LeadRow = {
   client_phone: string;
   client_email: string;
   client_language: string;
+  /** Free-text: amount + currency, e.g. "5000 USD" or "300k THB". */
+  client_target_budget: string;
   service_type: string;
   source_channel: string;
   transfer_status: string;

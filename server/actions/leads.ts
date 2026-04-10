@@ -94,6 +94,7 @@ export async function createLeadAction(raw: unknown) {
       client_phone: input.client_phone,
       client_email: input.client_email,
       client_language: input.client_language,
+      client_target_budget: input.client_target_budget,
       service_type: input.service_type,
       source_channel: input.source_channel,
       transfer_status: input.transfer_status || "new",

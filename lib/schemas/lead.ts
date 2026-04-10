@@ -6,8 +6,18 @@ export const createLeadSchema = z.object({
   partner_id: z.string().min(1).max(64),
   client_name: z.string().trim().min(1).max(300),
   client_phone: z.string().trim().min(1).max(80),
-  client_email: z.string().trim().min(1).max(200).email(),
+  client_email: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .default("")
+    .refine(
+      (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+      "Invalid email",
+    ),
   client_language: z.string().trim().min(1).max(40),
+  client_target_budget: z.string().trim().min(1).max(80),
   /** Not collected in UI; stored empty on new leads. */
   service_type: z.string().max(120).optional().default(""),
   source_channel: z.string().max(120).optional().default(""),
