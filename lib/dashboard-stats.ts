@@ -130,6 +130,49 @@ export function volumeTotals(leads: LeadRow[]): {
   return { contractUsd, commissionUsd };
 }
 
+function parseCompactNumber(raw: string): number | null {
+  const s = (raw ?? "").trim().toLowerCase();
+  if (!s) return null;
+  const m = s.match(/-?\d+(?:[.,]\d+)?/);
+  if (!m) return null;
+  const base = parseFloat(m[0].replace(",", "."));
+  if (!Number.isFinite(base)) return null;
+  const suffix = s.slice(m.index! + m[0].length).trim();
+  const mult = suffix.startsWith("k") ? 1_000 : suffix.startsWith("m") ? 1_000_000 : 1;
+  return base * mult;
+}
+
+function parseTargetBudget(raw: string): { amount: number; currency: string } | null {
+  const s = (raw ?? "").trim();
+  if (!s) return null;
+  const amount = parseCompactNumber(s);
+  if (amount === null) return null;
+  const cur = s.match(/\b[A-Za-z]{3}\b/)?.[0]?.toUpperCase() ?? "UNK";
+  return { amount, currency: cur };
+}
+
+export function targetBudgetTotals(leads: LeadRow[]): {
+  withBudget: number;
+  total: number;
+  byCurrency: { currency: string; amount: number }[];
+} {
+  const map = new Map<string, number>();
+  let withBudget = 0;
+  let total = 0;
+  for (const l of leads) {
+    if (parseSheetBool(l.is_archived)) continue;
+    total++;
+    const p = parseTargetBudget(l.client_target_budget);
+    if (!p) continue;
+    withBudget++;
+    map.set(p.currency, (map.get(p.currency) ?? 0) + p.amount);
+  }
+  const byCurrency = [...map.entries()]
+    .map(([currency, amount]) => ({ currency, amount }))
+    .sort((a, b) => b.amount - a.amount);
+  return { withBudget, total, byCurrency };
+}
+
 /**
  * “Leads created” series for the selected period: every bucket on the time axis inside the interval,
  * empty buckets as zero (line does not jump between two points).

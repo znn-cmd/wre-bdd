@@ -38,6 +38,7 @@ import {
   DASHBOARD_TABLE_ALL_STATUS_KEYS,
   groupLeadsByCountry,
   stageFunnelBars,
+  targetBudgetTotals,
   volumeTotals,
 } from "@/lib/dashboard-stats";
 import { Button } from "@/components/ui/button";
@@ -145,6 +146,10 @@ export function DashboardView({
   );
   const volume = React.useMemo(
     () => volumeTotals(filteredLeads),
+    [filteredLeads],
+  );
+  const budgets = React.useMemo(
+    () => targetBudgetTotals(filteredLeads),
     [filteredLeads],
   );
   const trendSeries = React.useMemo(
@@ -309,7 +314,7 @@ export function DashboardView({
         </div>
       )}
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>Stages (partner_status)</CardTitle>
@@ -347,6 +352,28 @@ export function DashboardView({
           <CardContent className="grid gap-2 text-sm">
             <Row k="Contract USD" v={formatUsd(volume.contractUsd)} />
             <Row k="Commission USD" v={formatUsd(volume.commissionUsd)} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Target budgets</CardTitle>
+            <p className="text-[11px] font-normal text-neutral-500">
+              Parsed from{" "}
+              <code className="rounded bg-neutral-100 px-0.5 dark:bg-neutral-800">
+                client_target_budget
+              </code>
+              .
+            </p>
+          </CardHeader>
+          <CardContent className="grid gap-2 text-sm">
+            <Row k="Leads with budget" v={`${budgets.withBudget} / ${budgets.total}`} />
+            {budgets.byCurrency.slice(0, 3).map((r) => (
+              <Row key={r.currency} k={`Σ ${r.currency}`} v={formatAmount(r.amount, r.currency)} />
+            ))}
+            {budgets.byCurrency.length === 0 ? (
+              <div className="text-[11px] text-neutral-500">No parsable budgets in this period.</div>
+            ) : null}
           </CardContent>
         </Card>
       </div>
@@ -652,6 +679,23 @@ function formatUsd(n: number): string {
   }).format(n);
 }
 
+function formatAmount(n: number, currency: string): string {
+  if (!Number.isFinite(n)) return "—";
+  const cur = (currency ?? "").trim().toUpperCase() || "UNK";
+  if (/^[A-Z]{3}$/.test(cur) && cur !== "UNK") {
+    try {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: cur,
+        maximumFractionDigits: 0,
+      }).format(n);
+    } catch {
+      // ignore
+    }
+  }
+  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(n)} ${cur}`;
+}
+
 function FunnelBarTooltip({
   active,
   payload,
@@ -694,6 +738,7 @@ function CountryChartsBlock({
     [leads, statuses],
   );
   const vol = React.useMemo(() => volumeTotals(leads), [leads]);
+  const budgets = React.useMemo(() => targetBudgetTotals(leads), [leads]);
   const trend = React.useMemo(
     () => buildCreationTrendSeries(leads, createdInterval),
     [leads, createdInterval],
@@ -731,6 +776,9 @@ function CountryChartsBlock({
           <div className="flex flex-col justify-center rounded-md border border-neutral-100 px-3 py-2 text-xs dark:border-neutral-800">
             <Row k="Contract USD" v={formatUsd(vol.contractUsd)} />
             <Row k="Commission USD" v={formatUsd(vol.commissionUsd)} />
+            {budgets.byCurrency.slice(0, 2).map((r) => (
+              <Row key={r.currency} k={`Σ ${r.currency}`} v={formatAmount(r.amount, r.currency)} />
+            ))}
           </div>
         </div>
         <div>

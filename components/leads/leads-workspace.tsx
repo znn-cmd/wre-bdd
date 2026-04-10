@@ -454,6 +454,21 @@ export function LeadsWorkspace({
         ),
       },
       {
+        accessorKey: "client_target_budget",
+        header: "Budget",
+        cell: (c) => {
+          const v = String(c.getValue() ?? "").trim();
+          return (
+            <span
+              className="max-w-[120px] truncate text-[11px]"
+              title={v || undefined}
+            >
+              {v || "—"}
+            </span>
+          );
+        },
+      },
+      {
         accessorKey: "updated_at",
         header: "Updated",
         cell: (c) => (
