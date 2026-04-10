@@ -1185,11 +1185,13 @@ function CreateLeadDialog({
     crm_deal_id: "",
   });
 
+  const normCountry = (code: string) => (code ?? "").trim().toUpperCase();
+
   const partnersForCountry = React.useMemo(() => {
-    const fc = f.country_code.trim().toUpperCase();
+    const fc = normCountry(f.country_code);
     if (!fc) return reference.partners;
     return reference.partners.filter((p) =>
-      p.operating_country_codes.some((c) => c.toUpperCase() === fc),
+      p.operating_country_codes.some((c) => normCountry(c) === fc),
     );
   }, [reference.partners, f.country_code]);
 
@@ -1211,7 +1213,7 @@ function CreateLeadDialog({
     const cc = reference.countries[0]?.country_code ?? "";
     const forCountry = reference.partners.filter((p) =>
       p.operating_country_codes.some(
-        (c) => c.toUpperCase() === cc.trim().toUpperCase(),
+        (c) => normCountry(c) === normCountry(cc),
       ),
     );
     setF({
