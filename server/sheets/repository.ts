@@ -29,6 +29,7 @@ import { randomBytes } from "crypto";
 import { nowIso, parseSheetBool } from "@/lib/dates";
 import { normalizeLogin } from "@/lib/password";
 import { columnEndLetterFromCount } from "@/lib/sheet-range";
+import { sanitizeLeadRowFromSheet } from "@/lib/sheet-cell-sanitize";
 
 const LEADS_HEADERS = HEADERS.Leads;
 const USERS_HEADERS = HEADERS.Users;
@@ -41,7 +42,11 @@ async function loadLeadsRaw(): Promise<LeadRow[]> {
   );
   return rows
     .filter((r) => (r[0] ?? "").trim() !== "")
-    .map((r) => rowToObject<LeadRow>(LEADS_HEADERS, padRow(r, LEADS_HEADERS.length)));
+    .map((r) =>
+      sanitizeLeadRowFromSheet(
+        rowToObject<LeadRow>(LEADS_HEADERS, padRow(r, LEADS_HEADERS.length)),
+      ),
+    );
 }
 
 function padRow(row: string[], len: number): string[] {

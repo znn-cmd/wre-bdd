@@ -55,7 +55,7 @@ export async function notifyPartnerNewLead(opts: {
     `New lead: ${opts.partner.partner_name}`,
     `Country: ${opts.lead.country_name || opts.lead.country_code}`,
     `Client: ${opts.lead.client_name}`,
-    `Phone: ${opts.lead.client_phone}`,
+    `Phone: ${(opts.lead.client_phone ?? "").trim() || "—"}`,
     (opts.lead.client_email ?? "").trim()
       ? `Email: ${opts.lead.client_email}`
       : null,
