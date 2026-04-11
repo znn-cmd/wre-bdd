@@ -332,12 +332,10 @@ export function computeAdminStageByCountry(leads: LeadRow[]): AdminStageByCountr
 export const DASHBOARD_TABLE_TRANSFER_STATUSES = ["sent", "accepted"] as const;
 export const DASHBOARD_TABLE_PARTNER_STATUSES = [
   "p_accepted",
-  "p_contacted",
   "p_work",
   "p_wait",
   "p_decision",
   "p_done",
-  "p_invoice",
   "p_noanswer",
   "p_refuse",
   "p_disappeared",
@@ -355,7 +353,7 @@ export type PartnerCountryTableRow = {
   partner_name: string;
   counts: Record<DashboardTableStatusKey, number>;
   totalLeads: number;
-  /** (p_done + p_invoice) / totalLeads × 100 */
+  /** p_done / totalLeads × 100 */
   conversionPct: number | null;
   contractUsd: number;
   commissionUsd: number;
@@ -386,7 +384,7 @@ function aggregatePartnerCountryRows(leads: LeadRow[]): PartnerCountryTableRow {
   }
   const vt = volumeTotals(leads);
   const totalLeads = leads.length;
-  const success = counts.p_done + counts.p_invoice;
+  const success = counts.p_done;
   const conversionPct =
     totalLeads > 0 ? Math.round((1000 * success) / totalLeads) / 10 : null;
   return {

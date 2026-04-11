@@ -15,7 +15,10 @@ import {
 import { format, startOfMonth } from "date-fns";
 import { enUS } from "date-fns/locale";
 import type { LeadRow, SessionUser, StatusRow } from "@/types/models";
-import type { PartnerCountryTableRow } from "@/lib/dashboard-stats";
+import type {
+  PartnerCountryTableGroup,
+  PartnerCountryTableRow,
+} from "@/lib/dashboard-stats";
 import {
   dashboardTableColumnLabel,
   dashboardTableStatusCategory,
@@ -135,13 +138,12 @@ export function DashboardView({
 
   const conversionFormulaText = React.useMemo(() => {
     const d = statusLabelForCode(statuses, "partner_status", "p_done");
-    const inv = statusLabelForCode(statuses, "partner_status", "p_invoice");
-    return `(${d} + ${inv}) / total leads in row`;
+    return `${d} / total leads in row`;
   }, [statuses]);
 
   const conversionThTitle = React.useMemo(
     () =>
-      `${conversionFormulaText}. Computed from data codes: p_done + p_invoice.`,
+      `${conversionFormulaText}. Computed from partner_status code: p_done.`,
     [conversionFormulaText],
   );
   const volume = React.useMemo(
@@ -440,7 +442,8 @@ export function DashboardView({
             <code className="rounded bg-neutral-100 px-0.5 dark:bg-neutral-800">transfer_status</code>{" "}
             and{" "}
             <code className="rounded bg-neutral-100 px-0.5 dark:bg-neutral-800">partner_status</code>{" "}
-            (columns use catalog labels). Conversion:{" "}
+            (columns use catalog labels). Each country is a collapsible section below.
+            Conversion:{" "}
             <span className="font-medium text-neutral-700 dark:text-neutral-300">
               {conversionFormulaText}
             </span>
@@ -456,153 +459,16 @@ export function DashboardView({
               No non-archived leads in the selected period.
             </p>
           ) : (
-            <div className="max-h-[min(70vh,720px)] overflow-auto rounded-md border border-neutral-200 dark:border-neutral-800">
-              <table className="w-full min-w-[1040px] border-collapse text-left text-[11px]">
-                <thead>
-                  <tr className="border-b border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900">
-                    <th
-                      scope="col"
-                      className="sticky top-0 z-20 whitespace-nowrap bg-neutral-100 px-2 py-2 font-medium dark:bg-neutral-900"
-                    >
-                      Country
-                    </th>
-                    <th
-                      scope="col"
-                      className="sticky top-0 z-20 whitespace-nowrap bg-neutral-100 px-2 py-2 font-medium dark:bg-neutral-900"
-                    >
-                      Partner
-                    </th>
-                    {DASHBOARD_TABLE_ALL_STATUS_KEYS.map((key) => {
-                      const label = dashboardTableColumnLabel(statuses, key);
-                      const cat = dashboardTableStatusCategory(key);
-                      const headerTone = statusColorTextClass(
-                        statusRowForCode(statuses, cat, key)?.color ?? "",
-                      );
-                      return (
-                        <th
-                          key={key}
-                          scope="col"
-                          title={
-                            key === "sent" || key === "accepted"
-                              ? `transfer_status · code: ${key}`
-                              : `partner_status · code: ${key}`
-                          }
-                          className={cn(
-                            "sticky top-0 z-20 max-w-[88px] bg-neutral-100 px-1 py-2 text-center text-[9px] leading-tight dark:bg-neutral-900",
-                            headerTone
-                              ? headerTone
-                              : "font-medium text-neutral-700 dark:text-neutral-300",
-                          )}
-                        >
-                          <span className="line-clamp-3">{label}</span>
-                        </th>
-                      );
-                    })}
-                    <th
-                      scope="col"
-                      className="sticky top-0 z-20 bg-neutral-100 px-1 py-2 text-center font-medium dark:bg-neutral-900"
-                      title="Total leads in row"
-                    >
-                      Σ
-                    </th>
-                    <th
-                      scope="col"
-                      className="sticky top-0 z-20 bg-neutral-100 px-1 py-2 text-center font-medium dark:bg-neutral-900"
-                      title={conversionThTitle}
-                    >
-                      Conv. %
-                    </th>
-                    <th
-                      scope="col"
-                      className="sticky top-0 z-20 bg-neutral-100 px-2 py-2 text-right font-medium dark:bg-neutral-900"
-                    >
-                      Contract USD
-                    </th>
-                    <th
-                      scope="col"
-                      className="sticky top-0 z-20 bg-neutral-100 px-2 py-2 text-right font-medium dark:bg-neutral-900"
-                    >
-                      Commission USD
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {partnerCountryTable.map((g) => (
-                    <React.Fragment key={g.country_code}>
-                      {g.partners.map((p, idx) => (
-                        <tr
-                          key={`${g.country_code}-${p.partner_id}`}
-                          className="border-b border-neutral-100 odd:bg-white even:bg-neutral-50/80 dark:border-neutral-800 dark:odd:bg-neutral-950 dark:even:bg-neutral-900/40"
-                        >
-                          {idx === 0 ? (
-                            <td
-                              rowSpan={g.partners.length}
-                              className="align-top border-r border-neutral-200 bg-neutral-100/90 px-2 py-2 font-medium text-neutral-800 dark:border-neutral-800 dark:bg-neutral-900/80 dark:text-neutral-100"
-                            >
-                              <div>{g.country_name}</div>
-                              <div className="text-[9px] font-normal text-neutral-500">
-                                {g.country_code}
-                              </div>
-                            </td>
-                          ) : null}
-                          <td
-                            className="max-w-[160px] px-2 py-1.5 font-medium text-neutral-800 dark:text-neutral-200"
-                            title={`${p.partner_name} (${p.partner_id})`}
-                          >
-                            <div className="truncate">{p.partner_name}</div>
-                            <div className="truncate font-mono text-[9px] font-normal text-neutral-500">
-                              {p.partner_id}
-                            </div>
-                          </td>
-                          {DASHBOARD_TABLE_ALL_STATUS_KEYS.map((key) => {
-                            const v = p.counts[key];
-                            return (
-                              <td
-                                key={key}
-                                className={`px-0.5 py-1.5 text-center tabular-nums ${
-                                  v === 0
-                                    ? "text-neutral-300 dark:text-neutral-600"
-                                    : "text-neutral-900 dark:text-neutral-100"
-                                }`}
-                              >
-                                {v}
-                              </td>
-                            );
-                          })}
-                          <td
-                            className={`px-1 py-1.5 text-center tabular-nums font-semibold ${metricCellClass(
-                              partnerMetricRankInCountry(g.partners, p, "totalLeads"),
-                            )}`}
-                          >
-                            {p.totalLeads}
-                          </td>
-                          <td
-                            className={`px-1 py-1.5 text-center tabular-nums font-medium ${metricCellClass(
-                              partnerMetricRankInCountry(g.partners, p, "conversionPct"),
-                            )}`}
-                          >
-                            {formatPct(p.conversionPct)}
-                          </td>
-                          <td
-                            className={`px-2 py-1.5 text-right tabular-nums ${metricCellClass(
-                              partnerMetricRankInCountry(g.partners, p, "contractUsd"),
-                            )}`}
-                          >
-                            {formatUsd(p.contractUsd)}
-                          </td>
-                          <td
-                            className={`px-2 py-1.5 text-right tabular-nums ${metricCellClass(
-                              partnerMetricRankInCountry(g.partners, p, "commissionUsd"),
-                            )}`}
-                          >
-                            {formatUsd(p.commissionUsd)}
-                          </td>
-                        </tr>
-                      ))}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
+            <div className="flex flex-col gap-4">
+              {partnerCountryTable.map((g, idx) => (
+                <CountryPartnerStatusAccordion
+                  key={g.country_code}
+                  group={g}
+                  defaultOpen={idx === 0}
+                  statuses={statuses}
+                  conversionThTitle={conversionThTitle}
+                />
+              ))}
             </div>
           )}
         </CardContent>
@@ -664,6 +530,175 @@ function metricCellClass(rank: "best" | "worst" | null): string {
     return "bg-red-200/90 text-red-950 dark:bg-red-950/55 dark:text-red-50";
   }
   return "text-neutral-800 dark:text-neutral-200";
+}
+
+function CountryPartnerStatusAccordion({
+  group,
+  defaultOpen,
+  statuses,
+  conversionThTitle,
+}: {
+  group: PartnerCountryTableGroup;
+  defaultOpen: boolean;
+  statuses: StatusRow[];
+  conversionThTitle: string;
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      className="group overflow-hidden rounded-lg border-4 border-neutral-900 bg-white dark:border-neutral-600 dark:bg-neutral-950"
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-b-4 border-neutral-900 bg-neutral-100 px-3 py-2.5 text-sm dark:border-neutral-700 dark:bg-neutral-900 [&::-webkit-details-marker]:hidden">
+        <div className="min-w-0">
+          <div className="font-semibold text-neutral-900 dark:text-neutral-100">
+            {group.country_name}
+          </div>
+          <div className="font-mono text-[10px] font-normal text-neutral-500">
+            {group.country_code}
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 text-[11px] text-neutral-600 dark:text-neutral-400">
+          <span>
+            {group.partners.length} partner
+            {group.partners.length === 1 ? "" : "s"}
+          </span>
+          <span
+            className="select-none text-neutral-400 transition-transform group-open:rotate-180"
+            aria-hidden
+          >
+            ▼
+          </span>
+        </div>
+      </summary>
+      <div className="max-h-[min(60vh,560px)] overflow-auto">
+        <table className="w-full min-w-[960px] border-collapse text-left text-[11px]">
+          <thead>
+            <tr className="border-b border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900">
+              <th
+                scope="col"
+                className="sticky top-0 z-10 whitespace-nowrap bg-neutral-100 px-2 py-2 font-medium dark:bg-neutral-900"
+              >
+                Partner
+              </th>
+              {DASHBOARD_TABLE_ALL_STATUS_KEYS.map((key) => {
+                const label = dashboardTableColumnLabel(statuses, key);
+                const cat = dashboardTableStatusCategory(key);
+                const headerTone = statusColorTextClass(
+                  statusRowForCode(statuses, cat, key)?.color ?? "",
+                );
+                return (
+                  <th
+                    key={key}
+                    scope="col"
+                    title={
+                      key === "sent" || key === "accepted"
+                        ? `transfer_status · code: ${key}`
+                        : `partner_status · code: ${key}`
+                    }
+                    className={cn(
+                      "sticky top-0 z-10 max-w-[88px] bg-neutral-100 px-1 py-2 text-center text-[9px] leading-tight dark:bg-neutral-900",
+                      headerTone
+                        ? headerTone
+                        : "font-medium text-neutral-700 dark:text-neutral-300",
+                    )}
+                  >
+                    <span className="line-clamp-3">{label}</span>
+                  </th>
+                );
+              })}
+              <th
+                scope="col"
+                className="sticky top-0 z-10 bg-neutral-100 px-1 py-2 text-center font-medium dark:bg-neutral-900"
+                title="Total leads in row"
+              >
+                Σ
+              </th>
+              <th
+                scope="col"
+                className="sticky top-0 z-10 bg-neutral-100 px-1 py-2 text-center font-medium dark:bg-neutral-900"
+                title={conversionThTitle}
+              >
+                Conv. %
+              </th>
+              <th
+                scope="col"
+                className="sticky top-0 z-10 bg-neutral-100 px-2 py-2 text-right font-medium dark:bg-neutral-900"
+              >
+                Contract USD
+              </th>
+              <th
+                scope="col"
+                className="sticky top-0 z-10 bg-neutral-100 px-2 py-2 text-right font-medium dark:bg-neutral-900"
+              >
+                Commission USD
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {group.partners.map((p) => (
+              <tr
+                key={`${group.country_code}-${p.partner_id}`}
+                className="border-b border-neutral-100 odd:bg-white even:bg-neutral-50/80 dark:border-neutral-800 dark:odd:bg-neutral-950 dark:even:bg-neutral-900/40"
+              >
+                <td
+                  className="max-w-[160px] px-2 py-1.5 font-medium text-neutral-800 dark:text-neutral-200"
+                  title={`${p.partner_name} (${p.partner_id})`}
+                >
+                  <div className="truncate">{p.partner_name}</div>
+                  <div className="truncate font-mono text-[9px] font-normal text-neutral-500">
+                    {p.partner_id}
+                  </div>
+                </td>
+                {DASHBOARD_TABLE_ALL_STATUS_KEYS.map((key) => {
+                  const v = p.counts[key];
+                  return (
+                    <td
+                      key={key}
+                      className={`px-0.5 py-1.5 text-center tabular-nums ${
+                        v === 0
+                          ? "text-neutral-300 dark:text-neutral-600"
+                          : "text-neutral-900 dark:text-neutral-100"
+                      }`}
+                    >
+                      {v}
+                    </td>
+                  );
+                })}
+                <td
+                  className={`px-1 py-1.5 text-center tabular-nums font-semibold ${metricCellClass(
+                    partnerMetricRankInCountry(group.partners, p, "totalLeads"),
+                  )}`}
+                >
+                  {p.totalLeads}
+                </td>
+                <td
+                  className={`px-1 py-1.5 text-center tabular-nums font-medium ${metricCellClass(
+                    partnerMetricRankInCountry(group.partners, p, "conversionPct"),
+                  )}`}
+                >
+                  {formatPct(p.conversionPct)}
+                </td>
+                <td
+                  className={`px-2 py-1.5 text-right tabular-nums ${metricCellClass(
+                    partnerMetricRankInCountry(group.partners, p, "contractUsd"),
+                  )}`}
+                >
+                  {formatUsd(p.contractUsd)}
+                </td>
+                <td
+                  className={`px-2 py-1.5 text-right tabular-nums ${metricCellClass(
+                    partnerMetricRankInCountry(group.partners, p, "commissionUsd"),
+                  )}`}
+                >
+                  {formatUsd(p.commissionUsd)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  );
 }
 
 function formatPct(n: number | null): string {
