@@ -3,6 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { nowIso, parseSheetBool } from "@/lib/dates";
+import { normalizePhoneForSheetStorage } from "@/lib/phone-display";
 import { leadCountryMatchesPartner } from "@/lib/partners";
 import { createLeadSchema, patchLeadSchema } from "@/lib/schemas/lead";
 import { hashPasswordForSheet, normalizeLogin } from "@/lib/password";
@@ -91,7 +92,7 @@ export async function createLeadAction(raw: unknown) {
       country_code: input.country_code,
       partner_id: input.partner_id,
       client_name: input.client_name,
-      client_phone: input.client_phone,
+      client_phone: normalizePhoneForSheetStorage(input.client_phone),
       client_email: input.client_email,
       client_language: input.client_language,
       client_target_budget: input.client_target_budget,
@@ -174,8 +175,9 @@ export async function updateLeadAction(leadId: string, raw: unknown) {
 
   const next: LeadRow = { ...prev };
   for (const key of keysToUpdate) {
-    (next as Record<string, string>)[key] =
-      String((patch as Record<string, string>)[key as string] ?? "");
+    let v = String((patch as Record<string, string>)[key as string] ?? "");
+    if (key === "client_phone") v = normalizePhoneForSheetStorage(v);
+    (next as Record<string, string>)[key] = v;
   }
 
   next.updated_at = nowIso();

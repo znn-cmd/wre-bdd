@@ -1,4 +1,5 @@
 import { getAppBaseUrl, getEnv } from "@/config/env";
+import { formatPhoneLeadingPlusForExternal } from "@/lib/phone-display";
 import type { LeadRow } from "@/types/models";
 import type { PartnerRow } from "@/types/models";
 import { appendTelegramLogRow, newLogId } from "@/server/sheets/repository";
@@ -55,7 +56,7 @@ export async function notifyPartnerNewLead(opts: {
     `New lead: ${opts.partner.partner_name}`,
     `Country: ${opts.lead.country_name || opts.lead.country_code}`,
     `Client: ${opts.lead.client_name}`,
-    `Phone: ${(opts.lead.client_phone ?? "").trim() || "—"}`,
+    `Phone: ${formatPhoneLeadingPlusForExternal(opts.lead.client_phone) || "—"}`,
     (opts.lead.client_email ?? "").trim()
       ? `Email: ${opts.lead.client_email}`
       : null,

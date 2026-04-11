@@ -4,6 +4,28 @@ export function shouldMaskClientPhoneForRole(role: string): boolean {
 }
 
 /**
+ * For Google Sheets: a leading `+` can make Sheets treat the cell like a formula.
+ * Store digits/symbols without a leading plus (strip all leading `+`).
+ */
+export function normalizePhoneForSheetStorage(phone: string): string {
+  let s = String(phone ?? "").trim();
+  while (s.startsWith("+")) {
+    s = s.slice(1).trimStart();
+  }
+  return s;
+}
+
+/**
+ * For outbound messages (e.g. Telegram): show international prefix as a single leading `+`.
+ * Accepts sheet values with or without `+`.
+ */
+export function formatPhoneLeadingPlusForExternal(phone: string): string {
+  const normalized = normalizePhoneForSheetStorage(phone);
+  if (!normalized) return "";
+  return `+${normalized}`;
+}
+
+/**
  * Hide digits except the last 4 of the digit run.
  * Non-digit characters are ignored for counting; if there are no digits,
  * falls back to masking all but the last 4 characters of the raw string.
