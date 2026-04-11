@@ -34,6 +34,8 @@ export async function readSheetRange(a1Range: string): Promise<string[][]> {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: env.GOOGLE_SHEETS_SPREADSHEET_ID,
     range: a1Range,
+    /** Computed + displayed values for formula cells — not the `=...` formula string. */
+    valueRenderOption: "FORMATTED_VALUE",
   });
   return normalizeSheetRows(res.data.values as unknown[][]);
 }
@@ -46,6 +48,7 @@ export async function batchReadRanges(
   const res = await sheets.spreadsheets.values.batchGet({
     spreadsheetId: env.GOOGLE_SHEETS_SPREADSHEET_ID,
     ranges,
+    valueRenderOption: "FORMATTED_VALUE",
   });
   const valueRanges = res.data.valueRanges ?? [];
   return valueRanges.map((vr) => ({
