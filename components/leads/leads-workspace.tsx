@@ -931,15 +931,6 @@ function LeadEditDialog({
             allStatuses={reference.statuses}
             category="partner_status"
           />
-          <SelectField
-            label="Final outcome"
-            value={draft.final_outcome ?? ""}
-            onChange={(v) => setDraft((d) => ({ ...d, final_outcome: v }))}
-            options={statusesForSelect(reference.statuses, "final_outcome")}
-            disabled={isPartner}
-            allStatuses={reference.statuses}
-            category="final_outcome"
-          />
           {isPartner ? (
             <Field
               label="Partner manager"

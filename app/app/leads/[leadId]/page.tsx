@@ -36,7 +36,7 @@ export default async function LeadDetailPage({
 
   function statusDd(
     label: string,
-    category: "transfer_status" | "partner_status" | "final_outcome",
+    category: "transfer_status" | "partner_status",
     code: string,
   ) {
     const text = statusLabelForCode(statuses, category, code);
@@ -90,7 +90,6 @@ export default async function LeadDetailPage({
         ))}
         {statusDd("Transfer", "transfer_status", lead.transfer_status)}
         {statusDd("Partner status", "partner_status", lead.partner_status)}
-        {statusDd("Final outcome", "final_outcome", lead.final_outcome)}
         {rows.slice(7).map(([k, v]) => (
           <div
             key={k}

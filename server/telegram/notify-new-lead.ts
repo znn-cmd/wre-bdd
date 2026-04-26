@@ -53,24 +53,35 @@ export async function notifyPartnerNewLead(opts: {
   const mcShort =
     mc.length > 600 ? `${mc.slice(0, 600)}…` : mc;
   const text = [
-    `New lead: ${opts.partner.partner_name}`,
+    // Header
+    `${opts.partner.partner_name}`,
+    "",
+    // Core fields
+    `New lead: ${opts.lead.client_name}`,
     `Country: ${opts.lead.country_name || opts.lead.country_code}`,
     `Client: ${opts.lead.client_name}`,
     `Phone: ${formatPhoneLeadingPlusForExternal(opts.lead.client_phone) || "—"}`,
-    (opts.lead.client_email ?? "").trim()
-      ? `Email: ${opts.lead.client_email}`
-      : null,
+    (opts.lead.client_email ?? "").trim() ? `Email: ${opts.lead.client_email}` : null,
     (opts.lead.client_language ?? "").trim()
       ? `Language: ${opts.lead.client_language}`
       : null,
+    (opts.lead.client_target_budget ?? "").trim()
+      ? `Budget: ${opts.lead.client_target_budget}`
+      : null,
+    "",
+    // Comment block
     mcShort ? `WRE manager comment: ${mcShort}` : null,
+    "",
+    // Meta + links
     `Our manager: ${opts.lead.source_manager_name}`,
     `Created: ${opts.lead.created_at}`,
     `Open: ${leadUrl}`,
     `CRM: ${opts.lead.crm_deal_id || "—"}`,
   ]
-    .filter(Boolean)
-    .join("\n");
+    .filter((v): v is string => v !== null && v !== undefined)
+    // Keep empty-string separators for readability in Telegram.
+    .join("\n")
+    .trim();
 
   const logBase = {
     telegram_log_id: newLogId("TG"),

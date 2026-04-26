@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "init-sheet": "tsx scripts/init-sheet.ts",
-    "seed-demo": "tsx scripts/seed-demo-data.ts"
+    "seed-demo": "tsx scripts/seed-demo-data.ts",
+    "telegram-weekly-test": "tsx scripts/telegram-weekly-report-test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

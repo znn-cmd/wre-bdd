@@ -11,6 +11,10 @@ const envSchema = z.object({
   ),
   APP_BASE_URL: z.string().url().optional(),
   TELEGRAM_DEFAULT_BOT_TOKEN: z.string().optional(),
+  /** Weekly ops report group/supergroup chat id (Bot API). */
+  TELEGRAM_WEEKLY_REPORT_CHAT_ID: z.string().optional(),
+  /** Optional separate bot for weekly report; falls back to TELEGRAM_DEFAULT_BOT_TOKEN. */
+  TELEGRAM_WEEKLY_BOT_TOKEN: z.string().optional(),
   NODE_ENV: z.enum(["development", "production", "test"]).optional(),
 });
 
@@ -24,6 +28,8 @@ const buildStub: Env = {
   SESSION_JWT_SECRET: "0".repeat(32),
   APP_BASE_URL: "http://localhost:3000",
   TELEGRAM_DEFAULT_BOT_TOKEN: undefined,
+  TELEGRAM_WEEKLY_REPORT_CHAT_ID: undefined,
+  TELEGRAM_WEEKLY_BOT_TOKEN: undefined,
   NODE_ENV: "production",
 };
 
@@ -53,6 +59,8 @@ export function getEnv(): Env {
     SESSION_JWT_SECRET: process.env.SESSION_JWT_SECRET,
     APP_BASE_URL: process.env.APP_BASE_URL,
     TELEGRAM_DEFAULT_BOT_TOKEN: process.env.TELEGRAM_DEFAULT_BOT_TOKEN,
+    TELEGRAM_WEEKLY_REPORT_CHAT_ID: process.env.TELEGRAM_WEEKLY_REPORT_CHAT_ID,
+    TELEGRAM_WEEKLY_BOT_TOKEN: process.env.TELEGRAM_WEEKLY_BOT_TOKEN,
     NODE_ENV: process.env.NODE_ENV,
   });
   if (!parsed.success) {

@@ -271,7 +271,7 @@ export async function appendTelegramLogRow(row: TelegramLogRow): Promise<void> {
 export async function loadAuditLogPage(opts: {
   maxRows?: number;
 }): Promise<AuditLogRow[]> {
-  const max = opts.maxRows ?? 2000;
+  const max = opts.maxRows ?? 20000;
   const rows = await readSheetRange(
     `${SHEET_NAMES.Audit_Log}!A2:${colEnd(HEADERS.Audit_Log.length)}`,
   );
@@ -301,6 +301,34 @@ export async function getSystemSettings(): Promise<SystemSettingRow[]> {
         padRow(r, HEADERS.System_Settings.length),
       ),
     );
+}
+
+/** Last successful weekly Telegram ops report slot (MSK hour), for idempotency. */
+export const TELEGRAM_WEEKLY_REPORT_IDEMPOTENCY_KEY =
+  "telegram_weekly_report_idempotency";
+
+export async function upsertSystemSetting(row: SystemSettingRow): Promise<void> {
+  const rows = await readSheetRange(
+    `${SHEET_NAMES.System_Settings}!A2:C500`,
+  );
+  const key = (row.key ?? "").trim();
+  if (!key) throw new Error("upsertSystemSetting: empty key");
+  const packed = objectToRow(
+    HEADERS.System_Settings,
+    row as unknown as Record<string, string>,
+  );
+  for (let i = 0; i < rows.length; i++) {
+    if ((rows[i]?.[0] ?? "").trim() === key) {
+      await updateWideRow(
+        SHEET_NAMES.System_Settings,
+        i + 2,
+        HEADERS.System_Settings.length,
+        packed,
+      );
+      return;
+    }
+  }
+  await appendRow(SHEET_NAMES.System_Settings, packed);
 }
 
 export async function getViewsConfigForUser(
